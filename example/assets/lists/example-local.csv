@@ -1,0 +1,5 @@
+name,cost,body,art_name,art_id,skip
+Druid,GMPS,"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",druid-card.png,,
+Fighter,PPP,"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",warrior-card.png,,
+Cutthroat,PM,"Lorem ipsum dolor sit amet, {{P}} consectetur adipiscing elit, sed do eiusmod tempor {{M}} incididunt ut labore et dolore magna aliqua.",cutthroat-card.png,,
