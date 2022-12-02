@@ -12,8 +12,8 @@ from image_card_layers import BasicImageLayer
 from config_enums import VerticalTextAlignment
 
 
-_DEFAULT_FONT_WINDOWS = 'constan.ttf'
-_DEFAULT_FONT_MACOS = 'Gill Sans.ttf'  # TODO verify this exists
+_DEFAULT_FONT_WINDOWS = '\\Windows\\Fonts\\constan.ttf'
+_DEFAULT_FONT_MACOS = '/Library/Fonts/GeorgiaPro-CondLight.ttf'
 _STARTING_FONT_SIZE = 32
 
 
@@ -155,43 +155,64 @@ class EmbeddedImageTextCardLayer(CardLayer):
     ) -> tuple[list[str], list[EmbeddedImage]]:
         lines = []
         embeds = []
-        padding = self._get_padding(draw, font)
-        padding_width = draw.textsize(padding, font)[0]
-        line_height = draw.textsize(' ', font)[1] + spacing
+        line_height = draw.textsize(' ', font)[1]
+        line_and_spacing_height = line_height + spacing
 
-        (padded_text, embedding_indexes) = self._pad_embeddings(padding)
+        (padded_text, embeddings) = self._pad_embeddings(draw, font)
 
-        index = 0
-        while index < len(padded_text):
+        embeddings.sort(key=(lambda ei: ei[0]))
+        i_embeddings = 0
+        i_text = 0
+        while i_text < len(padded_text):
             length = _find_next_fit_length(
-                padded_text, index, font, self._placement.w)
+                padded_text, i_text, font, self._placement.w)
+
             if length == 0:
                 print('Warning: unable to fit text a row')
                 return (self._text, [])
 
-            for embed in embedding_indexes:
-                if (embed[0] < index + length) and embed[0] >= index:
-                    x = self._placement.x + \
-                        draw.textsize(padded_text[index:embed[0]], font)[0]
-                    y = self._placement.y + (len(lines) * line_height)
-                    embeds.append(
-                        self.EmbeddedImage(
-                            Placement(x, y, padding_width, padding_width),
-                            embed[1],
-                        ),
-                    )
+            while (i_embeddings < len(embeddings) and embeddings[i_embeddings][0] < i_text + length):
+                embed = embeddings[i_embeddings]
+                embed_file = embed[1]
+                embed_size = embed[2]
 
-            lines.append(padded_text[index:index + length])
-            index = index + length
+                # x offset for the preceding text and the spacing due to embedding size ratio
+                x = self._placement.x \
+                    + draw.textsize(padded_text[i_text:embed[0]], font)[0] \
+                    + (embed_size[1] - embed_size[1] * self._embed_size_ratio) / 2
+
+                # y offset for the preceding lines and the spacing due to embedding size ratio and v offset
+                y = self._placement.y + \
+                    (len(lines) * line_and_spacing_height) + \
+                    (line_height * self._embed_v_offset_ratio) + \
+                    (embed_size[1] - embed_size[1]
+                     * self._embed_size_ratio) / 2
+
+                w = embed_size[0] * self._embed_size_ratio
+                h = embed_size[1] * self._embed_size_ratio
+                embeds.append(
+                    self.EmbeddedImage(
+                        Placement(int(x), int(y), int(w), int(h)),
+                        embed_file,
+                    ),
+                )
+
+                i_embeddings = i_embeddings + 1
+
+            lines.append(padded_text[i_text:i_text + length])
+            i_text = i_text + length
 
         return (lines, embeds)
 
-    # returns (padded_string, embedding_indexes)
-    def _pad_embeddings(self, padding: str) -> tuple[str, list[tuple[int, str]]]:
+    # returns (padded_string, embeddings)
+    # embeddings: list of (index in padded text, embedding id, image size)
+    def _pad_embeddings(
+        self, draw: ImageDraw.ImageDraw, font: ImageFont.ImageFont
+    ) -> tuple[str, list[tuple[int, str, tuple[int, int]]]]:
         index = 0
         total_padding = 0
         last_index = 0
-        embeds = list()
+        embeddings = list()
 
         new_text = ''
         while index < len(self._text):
@@ -200,7 +221,9 @@ class EmbeddedImageTextCardLayer(CardLayer):
 
             embedding = self._embedding_map.get(word.strip())
             if embedding is not None:
-                embeds.append((index + total_padding, embedding))
+                (padding, embedding_size) = self._get_padding_str(embedding, draw, font)
+                embeddings.append((index + total_padding, embedding, embedding_size))
+
                 replacement_text = word.replace(word.strip(), padding)
                 new_text = new_text + \
                     self._text[last_index:index] + replacement_text
@@ -213,7 +236,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
         if last_index != index:
             new_text = new_text + self._text[last_index:index]
 
-        return (new_text, embeds)
+        return (new_text, embeddings)
 
     def _next_word_index(self, text: str, start: int) -> int:
         while start < len(text) and not text[start].isspace():
@@ -230,12 +253,21 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 move_placement(0, v_offset, embed.place)
             ).render(onto)
 
-    def _get_padding(self, draw: ImageDraw.ImageDraw, font: ImageFont.ImageFont) -> str:
-        height_px = draw.textsize(self._text, font)[1]
-        padding = ' '
-        while draw.textsize(padding, font)[0] < self._embed_size_ratio * height_px:
-            padding = padding + ' '
-        return padding
+    # gets the padding string and the size of the embed the padding is for
+    def _get_padding_str(
+        self, embed_file: str, draw: ImageDraw.ImageDraw, font: ImageFont.ImageFont
+    ) -> tuple[str, tuple[int, int]]:
+        with self._image_provider.get_image(embed_file) as embed_image:
+            # the padding should have similar w/h ratio as the embedding
+            image_w_h_ratio = embed_image.width / embed_image.height
+            height_px = draw.textsize(' ', font)[1]
+            target_width = image_w_h_ratio * height_px
+            padding = ' '
+            while draw.textsize(padding, font)[0] < target_width:
+                padding = padding + ' '
+
+            w_ratio = embed_image.width / draw.textsize(padding, font)[0]
+            return (padding, (int(embed_image.width / w_ratio), int(embed_image.height / w_ratio)))
 
 
 # returns length of string starting from start that fits in
@@ -245,6 +277,8 @@ def _find_next_fit_length(
     start: int,
     font: ImageFont.FreeTypeFont,
     width_px: int
+
+
 ) -> int:
     newline = text[start:].find('\n')
     end = start + newline if newline != -1 else len(text) - 1
@@ -284,8 +318,8 @@ def _get_v_offset(
 
 def _get_default_font_file() -> str:
     if sys.platform.startswith('win32'):
-        drive = pathlib.Path.home().drive + '\\\\'
-        return os.path.join(drive, 'Windows\\Fonts\\', _DEFAULT_FONT_WINDOWS)
+        return _DEFAULT_FONT_WINDOWS
     elif sys.platform.startswith('darwin'):
-        drive = pathlib.Path.home().drive + '//'
-        return os.path.join(drive, 'System/Library/Fonts/', _DEFAULT_FONT_MACOS)
+        return _DEFAULT_FONT_MACOS
+    else:
+        raise Exception('No default font known for OS.')

@@ -86,8 +86,8 @@
         "{{S}}": "energy-spiritual.png",
         "{{G}}": "energy-generic.png"
     },
-    "text_embed_v_offset_ratio": -0.1,
-    "text_embed_size_ratio": 0.9,
+    "text_embed_v_offset_ratio": -0.05,
+    "text_embed_size_ratio": 1.0,
 
     "image_provider": "google",
     "decklist_provider": "google",
