@@ -1,16 +1,14 @@
 #!/usr/bin/python
+import sys
 from dataclasses import dataclass
 from typing import Optional
-import sys
-import os
-import pathlib
-from image_provider import ImageProvider
-from PIL import ImageFont, Image, ImageDraw
-from placement import Placement, to_box, move_placement
-from card_layer import CardLayer
-from image_card_layers import BasicImageLayer
-from config_enums import VerticalTextAlignment
 
+from card_layer import CardLayer
+from config_enums import VerticalTextAlignment
+from image_card_layers import BasicImageLayer
+from image_provider import ImageProvider
+from PIL import Image, ImageDraw, ImageFont
+from placement import Placement, move_placement, to_box
 
 _DEFAULT_FONT_WINDOWS = '\\Windows\\Fonts\\constan.ttf'
 _DEFAULT_FONT_MACOS = '/Library/Fonts/GeorgiaPro-CondLight.ttf'

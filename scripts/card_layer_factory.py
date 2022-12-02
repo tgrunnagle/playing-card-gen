@@ -1,11 +1,12 @@
 #!/usr/bin/python
 from abc import ABC
+
 from card_layer import CardLayer
-from text_card_layers import BasicTextLayer, EmbeddedImageTextCardLayer
-from image_card_layers import BasicImageLayer, SymbolRowImageLayer
-from placement import *
-from image_provider import ImageProvider
 from config_enums import CardLayerType
+from image_card_layers import BasicImageLayer, SymbolRowImageLayer
+from image_provider import ImageProvider
+from placement import *
+from text_card_layers import BasicTextLayer, EmbeddedImageTextCardLayer
 
 
 class CardLayerFactory(ABC):

@@ -1,11 +1,11 @@
 #!/usr/bin/python
-from typing import Optional
 import os
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import PIL.Image
-from google_drive_client import GoogleDriveClient
 from config_enums import ImageProviderType
+from google_drive_client import GoogleDriveClient
 
 
 class ImageProvider(ABC):

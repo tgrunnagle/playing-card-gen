@@ -1,9 +1,9 @@
 #!/usr/bin/python
+from card_layer import CardLayer
+from config_enums import SymbolDirection
 from image_provider import ImageProvider
 from PIL import Image
-from placement import Placement, to_box, copy_placement
-from config_enums import SymbolDirection
-from card_layer import CardLayer
+from placement import Placement, copy_placement, to_box
 
 
 class BasicImageLayer(CardLayer):

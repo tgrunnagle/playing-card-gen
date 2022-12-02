@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import argparse
-import os
 from abc import ABC
 
 from generator import Generator

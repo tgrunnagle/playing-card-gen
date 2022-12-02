@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-from google_drive_client import GoogleDriveClient
 import argparse
 import os
+
+from google_drive_client import GoogleDriveClient
 
 if __name__ == '__main__':
 

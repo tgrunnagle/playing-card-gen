@@ -2,10 +2,10 @@
 from abc import ABC, abstractmethod
 
 from card import Card
-from placement import *
-from image_provider import ImageProviderFactory
 from card_layer_factory import CardLayerFactory
 from config_enums import CardBuilderType
+from image_provider import ImageProviderFactory
+from placement import *
 
 
 class CardBuilder(ABC):

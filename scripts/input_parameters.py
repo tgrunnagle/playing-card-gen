@@ -1,10 +1,10 @@
 #!/usr/bin/python
-import csv
 import json
 from abc import ABC
 from dataclasses import dataclass
 
 from decklist_provider import DecklistProviderFactory
+
 
 @dataclass
 class InputParameters:
