@@ -1,6 +1,6 @@
 import csv
 import io
-import os.path
+import os
 import pickle
 import re
 import urllib
@@ -50,6 +50,7 @@ class GoogleDriveClient:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
 
+        lookup_id = id
         if folder_id is not None:
             lookup_ids = self.get_ids(id, folder_id)
             if len(lookup_ids) > 1:
@@ -65,27 +66,6 @@ class GoogleDriveClient:
                 _, done = downloader.next_chunk()
             with open(output_file_name, 'wb') as f:
                 f.write(stream.getbuffer())
-
-    def get_ids(self, name: str, folder_id: str) -> list[str]:
-        creds = self._get_creds()
-        service = build('drive', 'v3', credentials=creds)
-
-        files: list[dict] = []
-        page_token = None
-        while True:
-            # pylint: disable=maybe-no-member
-            response = service.files().list(
-                q=F"name='{name}' and '{folder_id}' in parents",
-                spaces='drive',
-                fields='nextPageToken, files(id)',
-                pageToken=page_token,
-            ).execute()
-
-            files.extend(response.get('files', []))
-            page_token = response.get('nextPageToken', None)
-            if page_token is None:
-                break
-        return list(map(lambda f: f.get('id'), files))
 
     def create_csv(self, name: str, target_folder_id: str) -> str:
         creds = self._get_creds()
@@ -115,6 +95,7 @@ class GoogleDriveClient:
         creds = self._get_creds()
         service = build('sheets', 'v4', credentials=creds)
 
+        lookup_id = id
         if folder_id is not None:
             lookup_ids = self.get_ids(id, folder_id)
             lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id
@@ -156,6 +137,72 @@ class GoogleDriveClient:
         file = service.files().create(body=file_metadata,
                                       fields='id').execute()
         return file.get('id')
+
+    def download_folder(self, folder_id: str, output_folder: str):
+        creds = self._get_creds()
+        service = build('drive', 'v3', credentials=creds)
+
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        search_results: list[dict] = []
+        page_token = None
+        while True:
+            # pylint: disable=maybe-no-member
+            response = service.files().list(
+                q=F"'{folder_id}' in parents",
+                spaces='drive',
+                fields='nextPageToken, files(id, name, mimeType)',
+                pageToken=page_token,
+            ).execute()
+
+            search_results.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+
+        file_ids = list(
+            map(lambda f: (f.get('id') or '', f.get('name') or '', f.get('mimeType') or ''), search_results))
+        for (id, name, mtype) in file_ids:
+
+            if name.endswith('.png'):
+                out_name = os.path.join(output_folder, name)
+                self.download_png(id, out_name, None)
+
+            elif mtype == 'application/vnd.google-apps.spreadsheet':
+                out_name = os.path.join(
+                    output_folder, name.split('.')[0] + '.csv')
+                reader: csv.DictReader = self.download_csv(id, None)
+                with open(out_name, 'w+') as out_file:
+                    writer = csv.DictWriter(
+                        out_file, fieldnames=reader.fieldnames)
+                    writer.writeheader()
+                    for row in reader:
+                        writer.writerow(row)
+
+            else:
+                print('Warning: unsupported file "' + name + '"')
+
+    def get_ids(self, name: str, folder_id: str) -> list[str]:
+        creds = self._get_creds()
+        service = build('drive', 'v3', credentials=creds)
+
+        files: list[dict] = []
+        page_token = None
+        while True:
+            # pylint: disable=maybe-no-member
+            response = service.files().list(
+                q=F"name='{name}' and '{folder_id}' in parents",
+                spaces='drive',
+                fields='nextPageToken, files(id)',
+                pageToken=page_token,
+            ).execute()
+
+            files.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+        return list(map(lambda f: f.get('id'), files))
 
     def _get_creds(self) -> Credentials:
         if self._cached_creds is not None and self._cached_creds.valid:
