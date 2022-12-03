@@ -1,0 +1,16 @@
+*/temp/*
+*/example/*
+!*/example/assets/*
+
+*.pickle
+credentials.json
+
+*.txt
+!requirements.txt
+*.md
+
+.gitattributes
+.gitignore
+
+.dockerignore
+DockerFile

@@ -14,19 +14,20 @@ There are two example configurations. Each generates the the same card type, but
 
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters. To generate it:
 ```
-python ./main.py --config './example/example_local_config.json' --decklist './example/example.csv'
+python ./scripts/main.py --config './example/example_local_config.json' --decklist './example/example.csv'
 ```
 
 ## To run in a Docker container
-**TODO**
-Start the server:
+To encapsulate dependencies, there is a Flask server and Dockerfile to host the generator API in a Docker container. Note that only local assets can be used (no Google image provider).
+To start the container:
 ```
-python ./scripts/server.py --assets_folder './example/assets/'
+docker run -p 8084:8084 --rm -it $(docker build -q --build-arg ASSETS_FOLDER="./example/assets/" --build-arg PORT=8084 .)
 ```
-Call the server:
+To call the server
 ```
-python ./remote_main.py --config './example/example_local_config.json' --decklist './example/example.csv'
+python ./scripts/remote_main.py --config "./example/example_docker_config.json" --decklist "./example/example.csv" --port 8084 --out_folder "./temp/out"
 ```
+The output will be saved to `temp/out/example.png`.
 
 ## To run the google drive example
 

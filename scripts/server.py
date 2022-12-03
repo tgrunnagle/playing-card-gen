@@ -21,15 +21,14 @@ class Server(ABC):
     server = Flask(__name__)
 
     @staticmethod
-    def run(assets_folder: str):
+    def run(assets_folder: str, host: str, port: int):
         Server.assets_folder = assets_folder
         Server.temp_folder = os.path.join(os.path.abspath('.'), 'temp')
 
         if not os.path.exists(Server.temp_folder):
             os.makedirs(Server.temp_folder)
 
-        Server.server.run(port=8084)
-
+        Server.server.run(host=host, port=port)
 
     @server.route("/gen", methods=['POST'])
     def gen():
@@ -66,10 +65,11 @@ class Server(ABC):
 
 if __name__ == "__main__":
 
-    parser=argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('--assets_folder', type=str, required=True,
                         help='Path to assets')
+    parser.add_argument('--host', type=str, required=False)
+    parser.add_argument('--port', type=int, required=False, default=8084)
+    args = parser.parse_args()
 
-    args=parser.parse_args()
-
-    Server.run(args.assets_folder)
+    Server.run(args.assets_folder, args.host, args.port)

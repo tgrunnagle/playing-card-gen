@@ -12,6 +12,7 @@ from placement import Placement, move_placement, to_box
 
 _DEFAULT_FONT_WINDOWS = '\\Windows\\Fonts\\constan.ttf'
 _DEFAULT_FONT_MACOS = '/Library/Fonts/GeorgiaPro-CondLight.ttf'
+_DEFAULT_FONT_LINUX = '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf'
 _STARTING_FONT_SIZE = 32
 
 
@@ -319,5 +320,7 @@ def _get_default_font_file() -> str:
         return _DEFAULT_FONT_WINDOWS
     elif sys.platform.startswith('darwin'):
         return _DEFAULT_FONT_MACOS
+    elif sys.platform.startswith('linux'):
+        return _DEFAULT_FONT_LINUX
     else:
         raise Exception('No default font known for OS.')
