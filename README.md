@@ -1,22 +1,31 @@
 # playing-card-gen
 Generate custom playing cards, especially for tabletop games.
 
-The main script takes as arguments a configuration json file and a decklist file. The configuration is responsible for defining the parameters of your card design. For instance, which card type to use, the placement of the art, and from where to source your assets. The decklist is a .csv file with the columns expected for the card type. A copy of the example output is in `example/example_output.png`.
+The main script takes as arguments a configuration json file and a decklist file. The configuration is responsible for defining the parameters of your card design. For instance, which card type to use, the placement of the art, and from where to source your assets. The decklist is a .csv file with the columns expected for the card type. A copy of the example output is in `example/example.png`.
 
 ## Features
 - Generates decklist images (usable with Tabletop Simulator) from assets and decklists in either local folders or Google drive.
 - Uses flexible configuration to define card layout and other build parameters.
 - Supports placing images and drawing text. So far there is an additional image layer for rendering in a line symbols mapped from text. The text layer supports wrapping, automatic font sizing, newlines, and image embeddings.
 
-
 There are two example configurations. Each generates the the same card type, but one uses local assets while the other reads them from Google drive.
 
 ## To run the local example
 
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters. To generate it:
-
 ```
-python ./scripts/main.py --config './example/example_local_config.json' --decklist './example/assets/lists/example-local.csv'
+python ./main.py --config './example/example_local_config.json' --decklist './example/example.csv'
+```
+
+## To run in a Docker container
+**TODO**
+Start the server:
+```
+python ./scripts/server.py --assets_folder './example/assets/'
+```
+Call the server:
+```
+python ./remote_main.py --config './example/example_local_config.json' --decklist './example/example.csv'
 ```
 
 ## To run the google drive example
@@ -45,5 +54,5 @@ Alternatively specify `--update_id` to update an existing image. You can use the
 ### 4. Generate the cards
 Update `example/example_google_config.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
 ```
-python ./scripts/main.py --config './example/example_google_config.json' --decklist '<decklist_name>'
+python ./main.py --config './example/example_google_config.json' --decklist '<decklist_name>'
 ```

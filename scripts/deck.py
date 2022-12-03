@@ -14,7 +14,7 @@ class Deck:
     def render(self) -> PIL.Image.Image:
         num_cards = len(self._cards)
         if num_cards == 0:
-            return PIL.Image.new('RBGA', (0, 0))
+            return PIL.Image.new('RGBA', (0, 0))
 
         num_w = min(10, num_cards)
         num_h = ceil(num_cards / num_w)

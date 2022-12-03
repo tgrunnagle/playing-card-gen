@@ -7,7 +7,6 @@ from card_builder import CardBuilderFactory
 from deck_builder import DeckBuilder
 from input_parameters import InputParameters
 
-
 class Generator(ABC):
     @staticmethod
     def run(params: InputParameters):

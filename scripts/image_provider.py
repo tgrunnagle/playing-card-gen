@@ -26,7 +26,7 @@ class ImageProviderFactory(ABC):
 
         if p == ImageProviderType.LOCAL:
             return LocalImageProvider(
-                config.get('local_image_folder'))
+                config.get('local_assets_folder'))
         elif p == ImageProviderType.GOOGLE:
             return GoogleDriveImageProvider(
                 config.get('google_secrets_path'),

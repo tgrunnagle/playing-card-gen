@@ -92,5 +92,5 @@
     "image_provider": "local",
     "decklist_provider": "local",
 
-    "local_image_folder": "./example/assets/images/"
+    "local_assets_folder": "./example/assets/"
 }
