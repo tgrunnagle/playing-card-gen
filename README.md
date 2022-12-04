@@ -12,7 +12,6 @@ The main script takes as arguments a configuration json file and a decklist file
 There are two example configurations. Each generates the the same card type, but one uses local assets while the other reads them from Google drive.
 
 ## To run the local example
-
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters.
 ```
 python ./scripts/main.py --config './example/example_local_config.json' --decklist './example/example.csv'
