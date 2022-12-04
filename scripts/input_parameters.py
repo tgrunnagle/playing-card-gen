@@ -9,7 +9,6 @@ from decklist_provider import DecklistProviderFactory
 @dataclass
 class InputParameters:
     config: dict
-    decklist_id: str
     decklist: list[dict[str, str]]
 
 class InputParameterBuilder(ABC):
@@ -23,7 +22,6 @@ class InputParameterBuilder(ABC):
 
         return InputParameters(
             config,
-            decklist_id,
             decklist,
         )
 

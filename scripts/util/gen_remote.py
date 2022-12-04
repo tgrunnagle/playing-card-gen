@@ -6,14 +6,14 @@ from abc import ABC
 from requests import request
 
 
-class RemoteMain(ABC):
+class GenRemote(ABC):
 
     @staticmethod
     def run(config_path: str, decklist_path: str, port: int, output_folder: str):
 
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-            
+
         out_name = decklist_path.split('/')[-1].split('.')[0]
         out_file = os.path.join(
             output_folder,
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     parser.add_argument('--out_folder', type=str, required=False, default='.')
 
     args = parser.parse_args()
-    RemoteMain.run(args.config, args.decklist, args.port, args.out_folder)
+    GenRemote.run(args.config, args.decklist, args.port, args.out_folder)

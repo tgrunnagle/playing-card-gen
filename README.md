@@ -14,7 +14,7 @@ There are two example configurations. Each generates the the same card type, but
 ## To run the local example
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters.
 ```
-python ./scripts/main.py --config './example/example_local_config.json' --decklist './example/example.csv'
+python ./scripts/util/gen_local.py --config './example/example_local_config.json' --decklist './example/example.csv'
 ```
 
 ## To run in a Docker container - recommended
@@ -25,7 +25,7 @@ docker run -p 8084:8084 --rm -it $(docker build -q --build-arg ASSETS_FOLDER="./
 ```
 To call the server
 ```
-python ./scripts/remote_main.py --config "./example/example_docker_config.json" --decklist "./example/example.csv" --port 8084 --out_folder "./temp/out"
+python ./scripts/util/gen_remote.py --config "./example/example_docker_config.json" --decklist "./example/example.csv" --port 8084 --out_folder "./temp/out"
 ```
 The output will be saved to `temp/out/example.png`.
 Alternatively, you can run the server directly:
@@ -43,7 +43,7 @@ Download the app credentials json. The example config expects it to be in `crede
 ### 2. Create the decklist
 Pick a folder to upload your assets to, and grab its id from the share url. To create an empty decklist in the remote folder `<folder_id>`:
 ```
-python ./scripts/google_create_csv --creds './credentials.json' --name 'example' --folder_id '<folder_id>'
+python ./scripts/util/google_create_csv.py --creds './credentials.json' --name 'example' --folder_id '<folder_id>'
 ```
 This will print the Id of the created spreadsheet, `<decklist_id>`. However, you should be able to refer to the assets by name in your configuration and decklists.
 
@@ -52,7 +52,7 @@ The columns names in the decklist are referenced by the corresponding `CardBuild
 ### 3. Upload images
 To upload an image `<image_file>` in `<folder_id>`:
 ```
-python ./scripts/google_upload_png --creds './credentials.json' --file <image_file> --name 'example_image.png' --folder_id '<folder_id>'
+python ./scripts/util/google_upload_png.py --creds './credentials.json' --file <image_file> --name 'example_image.png' --folder_id '<folder_id>'
 ```
 Alternatively specify `--update_id` to update an existing image. You can use the images in `example/assets/images/`.
 
@@ -63,7 +63,7 @@ python ./main.py --config './example/example_google_config.json' --decklist '<de
 ```
 
 ## Utility scripts
-Download all decklists and `.png`s from folder on Google drive. This can be useful to get assets into a local folder to load into the Docker image.
+- Download all decklists and `.png`s from folder on Google drive. This can be useful to get assets into a local folder to load into the Docker image.
 ```
-python ./scripts/google_download_folder.py --creds 'credentials.json' --source_folder_id <folder_id> --target_folder 'temp/assets/'
+python ./scripts/util/google_download_folder.py --creds 'credentials.json' --source_folder_id <folder_id> --target_folder 'temp/assets/'
 ```

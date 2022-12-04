@@ -2,6 +2,8 @@
 */example/*
 !*/example/assets/*
 
+scripts/util/*
+
 *.pickle
 credentials.json
 

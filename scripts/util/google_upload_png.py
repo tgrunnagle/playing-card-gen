@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
-import argparse
-import os
 
-from google_drive_client import GoogleDriveClient
+import argparse
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from google_drive_client import GoogleDriveClient  # noqa
 
 if __name__ == '__main__':
 

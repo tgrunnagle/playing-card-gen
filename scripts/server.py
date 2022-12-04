@@ -4,6 +4,7 @@ import csv
 import io
 import json
 from abc import ABC
+from typing import Optional
 
 from card_builder import CardBuilderFactory
 from config_enums import ImageProviderType
@@ -18,7 +19,7 @@ class Server(ABC):
     server = Flask(__name__)
 
     @staticmethod
-    def run(assets_folder: str, host: str, port: int):
+    def run(assets_folder: str, host: Optional[str], port: Optional[int]):
         Server.assets_folder = assets_folder
         Server.server.run(host=host, port=port)
 
@@ -42,7 +43,7 @@ class Server(ABC):
         with io.TextIOWrapper(decklist.stream, encoding='utf-8') as dls:
             cards = csv.DictReader(dls.readlines())
 
-        params = InputParameters(config, '', cards)
+        params = InputParameters(config, cards)
 
         card_builder = CardBuilderFactory.build(params.config)
         deck_builder = DeckBuilder(card_builder)
