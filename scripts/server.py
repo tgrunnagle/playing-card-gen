@@ -4,8 +4,6 @@ import csv
 import io
 import json
 import os
-import random
-import string
 import threading
 from abc import ABC
 from typing import Optional
@@ -18,14 +16,16 @@ from input_parameters import InputParameters
 from werkzeug.exceptions import BadRequest
 
 
-class CleanupDaemon(ABC):
+class CleanupDaemon():
 
     _CLEANUP_INTERVAL = 10
 
     def __init__(self):
         self._lock = threading.Lock()
+        self._cleanup_lock = threading.Lock()
         self._running = False
         self._files = []
+        self._streams = []
 
     def start(self):
         if self._running:
@@ -35,7 +35,7 @@ class CleanupDaemon(ABC):
             if self._running:
                 return
 
-            self._schedule_deletes()
+            self._schedule_cleanup()
             self._running = True
         finally:
             self._lock.release()
@@ -50,43 +50,85 @@ class CleanupDaemon(ABC):
         finally:
             self._lock.release()
 
+    def add_stream(self, stream: io.IOBase):
+        if not self._running:
+            raise Exception('cleanup daemon not running')
+
+        self._lock.acquire()
+        try:
+            self._streams.append(stream)
+        finally:
+            self._lock.release()
+
+    def _file_count(self) -> int:
+        return len(self._files)
+
+    def _stream_count(self) -> int:
+        return len(self._streams)
+
     def _pop_file(self) -> Optional[str]:
         self._lock.acquire()
         try:
             if len(self._files) == 0:
                 return None
-            return self._files.pop()
+            return self._files.pop(0)
         finally:
             self._lock.release()
 
-    def _schedule_deletes(self):
-        threading.Timer(
-            CleanupDaemon._CLEANUP_INTERVAL, self._delete_files, args=()).start()
-
-    def _delete_files(self):
+    def _pop_stream(self) -> Optional[io.IOBase]:
+        self._lock.acquire()
         try:
-            file = self._pop_file()
-            while file is not None:
-                if os.path.exists(file):
-                    os.remove(file)
-                file = self._pop_file()
+            if len(self._streams) == 0:
+                return None
+            return self._streams.pop(0)
         finally:
-            self._schedule_deletes()
+            self._lock.release()
+
+    def _schedule_cleanup(self):
+        timer = threading.Timer(
+            CleanupDaemon._CLEANUP_INTERVAL, self._cleanup, args=())
+        timer.daemon = True
+        timer.start()
+
+    def _cleanup(self):
+        self._cleanup_lock.acquire()
+        try:
+            # only process as many files/streams as there are to start
+            # in case this method re-adds them.
+            # no other thread should be removing items while the
+            # _cleanup_lock is held.
+            file_count = self._file_count()
+            for _ in range(file_count):
+                file = self._pop_file()
+                if file is not None and os.path.exists(file):
+                    os.remove(file)
+
+            stream_count = self._stream_count()
+            for _ in range(stream_count):
+                stream = self._pop_stream()
+                if stream is not None and not stream.closed:
+                    if stream.tell() == 0:
+                        # stream not read yet
+                        self.add_stream(stream)
+                    else:
+                        stream.close()
+        except Exception as e:
+            print('Exception during cleanup: ' + str(e))
+        finally:
+            self._cleanup_lock.release()
+            self._schedule_cleanup()
 
 
 class Server(ABC):
 
     server = Flask(__name__)
+    cleanup = CleanupDaemon()
 
     @staticmethod
     def run(assets_folder: str, host: str, port: int):
 
         Server.assets_folder = assets_folder
-        Server.temp_folder = os.path.join(os.path.abspath('.'), 'temp/server/')
-        if not os.path.exists(Server.temp_folder):
-            os.makedirs(Server.temp_folder)
 
-        Server.cleanup = CleanupDaemon()
         Server.cleanup.start()
 
         Server.server.teardown_appcontext(Server._on_context_teardown)
@@ -95,9 +137,13 @@ class Server(ABC):
     @staticmethod
     def _on_context_teardown(_):
         try:
-            temp_file = g.get('temp_file')
-            if temp_file is not None:
-                Server.cleanup.add_file(temp_file)
+            # can't close the stream here because the response isn't
+            # dont with it yet
+            # there's still a race condition with cleanup
+            stream: io.BytesIO = g.get('file_stream')
+            if stream is not None:
+                Server.cleanup.add_stream(stream)
+
         except Exception as e:
             print(e)
 
@@ -127,14 +173,12 @@ class Server(ABC):
         deck_builder = DeckBuilder(card_builder)
         deck = deck_builder.build(params.decklist)
 
-        temp_file = os.path.join(Server.temp_folder, ''.join(random.choice(
-            string.ascii_letters) for _ in range(10)) + '.png')
         with deck.render() as deck_image:
-            deck_image.save(temp_file, bitmap_format='png')
-
-        g.temp_file = temp_file
-
-        return send_file(temp_file,  mimetype='image/png')
+            stream = io.BytesIO()
+            deck_image.save(stream, format='png')
+            stream.seek(0)
+            g.file_stream = stream
+            return send_file(stream,  mimetype='image/png')
 
 
 if __name__ == "__main__":
