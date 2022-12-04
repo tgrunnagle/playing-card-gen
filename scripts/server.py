@@ -1,19 +1,77 @@
 #!/usr/bin/python
 import argparse
 import csv
-import json
-from abc import ABC
 import io
+import json
+import os
+import random
+import string
+import threading
+from abc import ABC
+from typing import Optional
 
 from card_builder import CardBuilderFactory
 from config_enums import ImageProviderType
 from deck_builder import DeckBuilder
-from flask import Flask, request, send_file
+from flask import Flask, g, request, send_file
 from input_parameters import InputParameters
 from werkzeug.exceptions import BadRequest
-import os
-import random
-import string
+
+
+class CleanupDaemon(ABC):
+
+    _CLEANUP_INTERVAL = 10
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._running = False
+        self._files = []
+
+    def start(self):
+        if self._running:
+            return
+        self._lock.acquire()
+        try:
+            if self._running:
+                return
+
+            self._schedule_deletes()
+            self._running = True
+        finally:
+            self._lock.release()
+
+    def add_file(self, file: str):
+        if not self._running:
+            raise Exception('cleanup daemon not running')
+
+        self._lock.acquire()
+        try:
+            self._files.append(file)
+        finally:
+            self._lock.release()
+
+    def _pop_file(self) -> Optional[str]:
+        self._lock.acquire()
+        try:
+            if len(self._files) == 0:
+                return None
+            return self._files.pop()
+        finally:
+            self._lock.release()
+
+    def _schedule_deletes(self):
+        threading.Timer(
+            CleanupDaemon._CLEANUP_INTERVAL, self._delete_files, args=()).start()
+
+    def _delete_files(self):
+        try:
+            file = self._pop_file()
+            while file is not None:
+                if os.path.exists(file):
+                    os.remove(file)
+                file = self._pop_file()
+        finally:
+            self._schedule_deletes()
 
 
 class Server(ABC):
@@ -22,13 +80,26 @@ class Server(ABC):
 
     @staticmethod
     def run(assets_folder: str, host: str, port: int):
-        Server.assets_folder = assets_folder
-        Server.temp_folder = os.path.join(os.path.abspath('.'), 'temp')
 
+        Server.assets_folder = assets_folder
+        Server.temp_folder = os.path.join(os.path.abspath('.'), 'temp/server/')
         if not os.path.exists(Server.temp_folder):
             os.makedirs(Server.temp_folder)
 
+        Server.cleanup = CleanupDaemon()
+        Server.cleanup.start()
+
+        Server.server.teardown_appcontext(Server._on_context_teardown)
         Server.server.run(host=host, port=port)
+
+    @staticmethod
+    def _on_context_teardown(_):
+        try:
+            temp_file = g.get('temp_file')
+            if temp_file is not None:
+                Server.cleanup.add_file(temp_file)
+        except Exception as e:
+            print(e)
 
     @server.route("/gen", methods=['POST'])
     def gen():
@@ -60,6 +131,9 @@ class Server(ABC):
             string.ascii_letters) for _ in range(10)) + '.png')
         with deck.render() as deck_image:
             deck_image.save(temp_file, bitmap_format='png')
+
+        g.temp_file = temp_file
+
         return send_file(temp_file,  mimetype='image/png')
 
 

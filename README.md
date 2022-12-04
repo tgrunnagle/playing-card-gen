@@ -29,6 +29,10 @@ To call the server
 python ./scripts/remote_main.py --config "./example/example_docker_config.json" --decklist "./example/example.csv" --port 8084 --out_folder "./temp/out"
 ```
 The output will be saved to `temp/out/example.png`.
+Alternatively, you can run the server directly:
+```
+python ./scripts/server.py --assets_folder './example/assets/' --port 8084
+```
 
 ## To run the google drive example
 
