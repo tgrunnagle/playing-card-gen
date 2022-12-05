@@ -43,17 +43,19 @@ class Server(ABC):
         with io.TextIOWrapper(decklist.stream, encoding='utf-8') as dls:
             cards = csv.DictReader(dls.readlines())
 
-        params = InputParameters(config, cards)
+        params = InputParameters(config, cards, '')
 
         card_builder = CardBuilderFactory.build(params.config)
         deck_builder = DeckBuilder(card_builder)
-        deck = deck_builder.build(params.decklist)
+        deck = deck_builder.build(params.deck_name, params.decklist)
 
         with deck.render() as deck_image:
             stream = io.BytesIO()
             deck_image.save(stream, format='png')
             stream.seek(0)
-            return send_file(stream,  mimetype='image/png')
+            response = send_file(stream,  mimetype='image/png')
+            response.headers.add('deck_size', deck.get_size())
+            return response
 
 
 if __name__ == "__main__":

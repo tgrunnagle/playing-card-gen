@@ -4,13 +4,19 @@ from math import ceil
 import PIL.Image
 from card import Card
 
-MAX_WIDTH = 10
-
-
 class Deck:
 
-    def __init__(self):
+    _MAX_WIDTH = 10
+
+    def __init__(self, name: str):
+        self._name = name
         self._cards: list[Card] = list()
+
+    def get_size(self):
+        return len(self._cards)
+
+    def get_name(self):
+        return self._name
 
     def add_card(self, card: Card):
         self._cards.append(card)
@@ -20,7 +26,7 @@ class Deck:
         if num_cards == 0:
             return PIL.Image.new('RGBA', (0, 0))
 
-        num_w = min(MAX_WIDTH, num_cards)
+        num_w = min(Deck._MAX_WIDTH, num_cards)
         num_h = ceil(num_cards / num_w)
         card_place = self._cards[0].get_placement()
         deck_pix_w = card_place.w * num_w

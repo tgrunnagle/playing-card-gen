@@ -12,8 +12,8 @@ class DeckBuilder:
     ):
         self._cb = card_builder
 
-    def build(self, cards_config: list[dict]) -> Deck:
-        deck = Deck()
+    def build(self, name: str, cards_config: list[dict]) -> Deck:
+        deck = Deck(name)
         for card_config in cards_config:
             if not bool(card_config.get('skip')):
                 deck.add_card(self._cb.build(card_config))

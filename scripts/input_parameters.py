@@ -2,6 +2,7 @@
 import json
 from abc import ABC
 from dataclasses import dataclass
+import os
 
 from decklist_provider import DecklistProviderFactory
 
@@ -10,6 +11,7 @@ from decklist_provider import DecklistProviderFactory
 class InputParameters:
     config: dict
     decklist: list[dict[str, str]]
+    deck_name: str
 
 class InputParameterBuilder(ABC):
 
@@ -19,9 +21,11 @@ class InputParameterBuilder(ABC):
             config = json.load(config_file)
 
         decklist = DecklistProviderFactory.build(config).get_list(decklist_id)
+        decklist_name = os.path.split(decklist_id)[1].split('.')[0]
 
         return InputParameters(
             config,
             decklist,
+            decklist_name,
         )
 
