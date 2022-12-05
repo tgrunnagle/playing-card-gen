@@ -1,10 +1,14 @@
 #!/usr/bin/python
 from math import ceil
-from card import Card
+
 import PIL.Image
+from card import Card
+
+MAX_WIDTH = 10
 
 
 class Deck:
+
     def __init__(self):
         self._cards: list[Card] = list()
 
@@ -16,7 +20,7 @@ class Deck:
         if num_cards == 0:
             return PIL.Image.new('RGBA', (0, 0))
 
-        num_w = min(10, num_cards)
+        num_w = min(MAX_WIDTH, num_cards)
         num_h = ceil(num_cards / num_w)
         card_place = self._cards[0].get_placement()
         deck_pix_w = card_place.w * num_w

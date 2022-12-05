@@ -9,7 +9,7 @@ from input_parameters import InputParameters
 
 class Generator(ABC):
     @staticmethod
-    def run(output_file: str, params: InputParameters):
+    def run(params: InputParameters, output_file: str) -> str:
 
         card_builder = CardBuilderFactory.build(params.config)
         deck_builder = DeckBuilder(card_builder)
@@ -24,4 +24,4 @@ class Generator(ABC):
 
         with deck.render() as deck_image:
             deck_image.save(output_file, bitmap_format='png')
-            print('Saved result to ' + output_file)
+        return output_file

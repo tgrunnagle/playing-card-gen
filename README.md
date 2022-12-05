@@ -8,6 +8,7 @@ The main script takes as arguments a configuration json file and a decklist file
 - Uses flexible configuration to define card layout and other build parameters.
 - Supports placing images and drawing text. So far there is an additional image layer for rendering in a line symbols mapped from text. The text layer supports wrapping, automatic font sizing, newlines, and image embeddings.
 - Supports running in a Docker container to isolate dependencies.
+- Generates saved object files for Tabletop Simulator.
 
 There are two example configurations. Each generates the the same card type, but one uses local assets while the other reads them from Google drive.
 
@@ -66,4 +67,8 @@ python ./main.py --config './example/example_google_config.json' --decklist '<de
 - Download all decklists and `.png`s from folder on Google drive. This can be useful to get assets into a local folder to load into the Docker image.
 ```
 python ./scripts/util/google_download_folder.py --creds 'credentials.json' --source_folder_id <folder_id> --target_folder 'temp/assets/'
+```
+- Generate a decklist and prepare it for Tabletop Simulator. Uploads the generated deck image to Google drive, then generates a TTS saved object `.json` pointing to that image. Copy the result file to the game's saved objects folder (on Windows, `C:\Users\<you>\Documents\My Games\Tabletop Simulator\Saves\Saved Objects\`), and load it into the game. Note that to run this example you'll need to update the Ids in `example/example_tts_config.json`.
+```
+python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_local_config.json" --decklist "./example/example.csv" --out_folder "./temp/out" --copy_to_tts False
 ```

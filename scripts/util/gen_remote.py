@@ -8,8 +8,7 @@ from requests import request
 
 class GenRemote(ABC):
 
-    @staticmethod
-    def run(config_path: str, decklist_path: str, port: int, output_folder: str):
+    def run(config_path: str, decklist_path: str, port: int, output_folder: str) -> str:
 
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -31,8 +30,7 @@ class GenRemote(ABC):
                 open(out_file, 'wb+') as result:
 
             result.write(response.content)
-
-        print('Saved result to ' + out_file)
+        return out_file
 
 
 if __name__ == "__main__":
@@ -46,4 +44,6 @@ if __name__ == "__main__":
     parser.add_argument('--out_folder', type=str, required=False, default='.')
 
     args = parser.parse_args()
-    GenRemote.run(args.config, args.decklist, args.port, args.out_folder)
+    out_file = GenRemote.run(args.config, args.decklist,
+                             args.port, args.out_folder)
+    print('Saved result to ' + out_file)
