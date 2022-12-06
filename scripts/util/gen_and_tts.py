@@ -67,21 +67,30 @@ class GenAndTTS(ABC):
 
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        tts_file = os.path.join(
+
+        tts_file_name = asset_name + '.json'
+        tts_file_path = os.path.join(
             output_folder,
-            asset_name + '.json',
+            tts_file_name,
         )
-        with open(tts_file, 'w+') as stream:
+        with open(tts_file_path, 'w+') as stream:
             json.dump(tts_deck, stream, indent=4)
+
+        tts_ids = google_client.get_ids(tts_file_name, target_folder)
+        if len(tts_ids) == 0:
+            google_client.create_json(
+                tts_file_path, asset_name + '.json', target_folder)
+        else:
+            google_client.update_json(tts_file_path, tts_ids[0])
 
         # optionally copy to the TTS folder for easy access in game
         if copy_to_tts:
             if (os.path.exists(_TTS_SAVED_OBJECTS_FOLDER)):
-                copy = shutil.copy(tts_file, _TTS_SAVED_OBJECTS_FOLDER)
+                copy = shutil.copy(tts_file_path, _TTS_SAVED_OBJECTS_FOLDER)
             else:
                 print('Warning: could not copy to TTS - folder does not exist')
 
-        return [deck_image_file, tts_file, copy]
+        return [deck_image_file, tts_file_path, copy]
 
 
 _TTS_SAVED_OBJECTS_FOLDER = os.path.expanduser('~') + \

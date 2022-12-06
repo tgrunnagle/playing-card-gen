@@ -73,3 +73,9 @@ python ./scripts/util/google_download_folder.py --creds 'credentials.json' --sou
 ```
 python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_local_config.json" --decklist "./example/example.csv" --out_folder "./temp/out" --copy_to_tts False --remote True
 ```
+
+- If you already have the images uploaded to Google drive, you can create the TTS file:
+
+```
+python ./scripts/util/gen_tts.py --front_id '<front_id>' --back_id '<back_id>' --size 52 --output_file './temp/out/tts.json'
+```

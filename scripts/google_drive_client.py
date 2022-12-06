@@ -24,10 +24,16 @@ class GoogleDriveClient:
         self._secrets_file = secrets_file
         self._cached_creds: Optional[Credentials] = None
 
+    def create_json(self, source: str, target_name: str, target_folder_id: str) -> str:
+        return self._create_file('application/json', source, target_name, target_folder_id)
+
     def create_png(self, source: str, target_name: str, target_folder_id: str) -> str:
+        return self._create_file('image/png', source, target_name, target_folder_id)
+
+    def _create_file(self, mime_type: str, source: str, target_name: str, target_folder_id: str) -> str:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
-        media = MediaFileUpload(source, mimetype='image/png')
+        media = MediaFileUpload(source, mimetype=mime_type)
         metadata = {
             'name': target_name,
             'parents': [target_folder_id]
@@ -37,26 +43,33 @@ class GoogleDriveClient:
             media_body=media).execute()
         return file.get('id')
 
+    def update_json(self, source: str, target_id: str):
+        self._update_file('application/json', source, target_id)
+
     def update_png(self, source: str, target_id: str):
+        self._update_file('image/png', source, target_id)
+
+    def _update_file(self, mime_type: str, source: str, target_id: str):
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
-        media = MediaFileUpload(source, mimetype='image/png')
+        media = MediaFileUpload(source, mimetype=mime_type)
         service.files().update(
             fileId=target_id,
             body={},
             media_body=media).execute()
 
-    def download_png(self, id: str, output_file_name: str, folder_id: Optional[str]):
+    # downloads a file by Id, or if folder_id is given, by name
+    def download_file(self, id_or_name: str, output_file_name: str, folder_id: Optional[str]):
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
 
-        lookup_id = id
+        lookup_id = id_or_name
         if folder_id is not None:
-            lookup_ids = self.get_ids(id, folder_id)
+            lookup_ids = self.get_ids(id_or_name, folder_id)
             if len(lookup_ids) > 1:
                 print('Warning: found ' + str(len(lookup_ids)) +
                       ' files for "' + id + '"')
-            lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id
+            lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id_or_name
 
         request = service.files().get_media(fileId=lookup_id)
         with io.BytesIO() as stream:

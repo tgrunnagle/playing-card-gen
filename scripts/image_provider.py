@@ -56,7 +56,7 @@ class GoogleDriveImageProvider(ImageProvider):
     def get_image(self, id: str) -> PIL.Image.Image:
         file_name = self._get_local_file_name(id)
         if not os.path.exists(file_name):
-            self._client.download_png(id, file_name, self._folder_id)
+            self._client.download_file(id, file_name, self._folder_id)
         # dont cache Image objects so callers can manage lifecycle
         img = PIL.Image.open(file_name)
 
