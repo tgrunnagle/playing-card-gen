@@ -24,6 +24,27 @@ class GoogleDriveClient:
         self._secrets_file = secrets_file
         self._cached_creds: Optional[Credentials] = None
 
+    def copy_file(self, id_or_name: str, source_folder: Optional[str], target_folder: str) -> str:
+        creds = self._get_creds()
+        
+        lookup_id = id_or_name
+        if source_folder is not None:
+            lookup_ids = self.get_ids(id_or_name, source_folder)
+            if len(lookup_ids) != 1:
+                raise Exception('Expected a single source file.')
+            lookup_id = lookup_ids[0]
+
+        service = build('drive', 'v3', credentials=creds)
+
+        copy = service.files().copy(
+            fileId=lookup_id,
+            fields='id',
+            body={
+                'parents': [target_folder]
+            }
+        ).execute()
+        return copy.get('id')
+
     def create_json(self, source: str, target_name: str, target_folder_id: str) -> str:
         return self._create_file('application/json', source, target_name, target_folder_id)
 
@@ -104,13 +125,13 @@ class GoogleDriveClient:
             removeParents=oldParents).execute()
         return id
 
-    def download_csv(self, id: str, folder_id: Optional[str]) -> csv.DictReader:
+    def download_csv(self, id_or_name: str, folder_id: Optional[str]) -> csv.DictReader:
         creds = self._get_creds()
         service = build('sheets', 'v4', credentials=creds)
 
-        lookup_id = id
+        lookup_id = id_or_name
         if folder_id is not None:
-            lookup_ids = self.get_ids(id, folder_id)
+            lookup_ids = self.get_ids(id_or_name, folder_id)
             lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id
 
         result = service.spreadsheets().get(
@@ -139,11 +160,11 @@ class GoogleDriveClient:
         rows = contentString.split('\r\n')
         return csv.DictReader(rows, delimiter=',')
 
-    def create_folder(self, folder: str, parent_id: str) -> str:
+    def create_folder(self, name: str, parent_id: str) -> str:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
         file_metadata = {
-            'name': folder,
+            'name': name,
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [parent_id]
         }

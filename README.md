@@ -1,7 +1,7 @@
 # playing-card-gen
 Generate custom playing cards, especially for tabletop games.
 
-With a simple `.json` configuration file and a deck list in a `.csv` file, these scripts can render images suitable for use in Tabletop Simulator. The configuration defines some parameters and describes the layout of the card. The scripts will load assets from a local folder or Google drive, then render the layers and save a `.png` of the deck. Check out the `example/` folder to see what goes in and what comes out.
+With a `.json` configuration file and a `.csv` decklist file, these scripts can render images suitable for printing or use in Tabletop Simulator. The configuration defines some parameters and describes the layout of the card. The scripts will load assets from a local folder or Google drive, then render the layers and save a `.png` of the deck. Check out the `example/` folder to see what goes in and what comes out.
 
 ## Features
 - Generates decklist images (usable with Tabletop Simulator) from assets and decklists in either local folders or Google drive.
@@ -13,9 +13,12 @@ With a simple `.json` configuration file and a deck list in a `.csv` file, these
 There are two example configurations. Each generates the the same card type, but one uses local assets while the other reads them from Google drive.
 
 ## To run the local example
+```
+python scripts/util/gen.py --h
+```
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters.
 ```
-python ./scripts/util/gen_local.py --config './example/example_local_config.json' --decklist './example/example.csv' --out_folder './temp/out/'
+python ./scripts/util/gen.py --config './example/example_local_config.json' --decklist './example/example.csv' --out_folder './temp/out/'
 ```
 
 ## To run in a Docker container - recommended
@@ -34,6 +37,8 @@ python ./scripts/server.py --assets_folder './example/assets/' --port 8084
 ```
 
 ## To run the google drive example
+`/examples/example_google_config.json` shows how to configure the generator to pull assets from Google drive.
+
 The example renders a card defined in a Google sheet, using images stored in Google drive. You'll need to do some set up, however, due to Google drive permissions. The app can only interact with files it created in your drive or a shared one. To get started you'll need to upload the assets to the drive.
 
 ### 1. [Create a Google app](https://console.developers.google.com/).
@@ -56,7 +61,7 @@ Alternatively specify `--update_id` to update an existing image. You can use the
 ### 4. Generate cards
 Update `example/example_google_config.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
 ```
-python ./scripts/util/gen_local.py --config './example/example_google_config.json' --decklist '<decklist_name>' --output_folder 'temp/out/'
+python ./scripts/util/gen.py --config './example/example_google_config.json' --decklist '<decklist_name>' --output_folder 'temp/out/'
 ```
 
 ## Utility scripts
@@ -65,17 +70,11 @@ python ./scripts/util/gen_local.py --config './example/example_google_config.jso
 python ./scripts/util/google_download_folder.py --creds 'credentials.json' --source_folder_id <folder_id> --target_folder 'temp/assets/'
 ```
 
-- Generate a decklist and prepare it for Tabletop Simulator. Uploads the generated deck image to Google drive, then generates a TTS saved object `.json` pointing to that image. Copy the result file to the game's saved objects folder (on Windows, `C:\Users\<you>\Documents\My Games\Tabletop Simulator\Saves\Saved Objects\`), and load it into the game.
+- Generate a decklist and prepare it for Tabletop Simulator. Uploads the generated deck image to Google drive, then generates a TTS saved object `.json` pointing to that image. Optionally copy the result file to TTS's saved objects folder (on Windows, `C:\Users\<you>\Documents\My Games\Tabletop Simulator\Saves\Saved Objects\`), and load it into the game.
 
-    Not having set up Google server authentication precludes this from running entirely within the Docker container, so dependencies need managed. The card generation can still happen in the container, but the interaction with Google drive to upload the result and determine file Ids can't. WIP.
+    Not having set up Google server authentication precludes this from running entirely within the Docker container, so dependencies need managed.
     
     Note that to run this example you'll need to update the Ids in `example/example_tts_config.json`.
 ```
-python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_local_config.json" --decklist "./example/example.csv" --out_folder "./temp/out" --copy_to_tts False --remote True
-```
-
-- If you already have the images uploaded to Google drive, you can create the TTS file:
-
-```
-python ./scripts/util/gen_tts.py --front_id '<front_id>' --back_id '<back_id>' --size 52 --output_file './temp/out/tts.json'
+python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_local_config.json" --decklist "./example/example.csv" --out_folder "./temp/out" --copy_to_tts
 ```

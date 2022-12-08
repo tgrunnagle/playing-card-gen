@@ -36,3 +36,8 @@ class VerticalTextAlignment(StrEnum):
     TOP = 'top'
     MIDDLE = 'middle'
     BOTTOM = 'bottom'
+
+
+class ImageLayout(StrEnum):
+    SHEET = 'sheet'
+    SINGLETON = 'singleton'

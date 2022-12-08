@@ -10,10 +10,10 @@ from generator import Generator  # noqa
 from input_parameters import InputParameterBuilder  # noqa
 
 
-class GenLocal(ABC):
-    def run(config_path: str, decklist_id: str, output_folder: str) -> str:
+class Gen(ABC):
+    def run(config_path: str, decklist_id: str, output_folder: str) -> list[str]:
         params = InputParameterBuilder.build(config_path, decklist_id)
-        return Generator.gen_deck_image(output_folder, params=params)
+        return Generator.gen_deck_images(output_folder, params=params)
 
 
 if __name__ == "__main__":
@@ -25,5 +25,6 @@ if __name__ == "__main__":
     parser.add_argument('--out_folder', type=str, required=False, default='.')
     args = parser.parse_args()
 
-    (out_file, _) = GenLocal.run(args.config, args.decklist, args.out_folder)
-    print('Saved result to ' + out_file)
+    out_files = Gen.run(args.config, args.decklist, args.out_folder)
+    for out_file in out_files:
+        print('Saved result to ' + out_file)

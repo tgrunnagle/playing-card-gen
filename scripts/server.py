@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import contextlib
 import csv
 import io
 import json
@@ -7,7 +8,7 @@ from abc import ABC
 from typing import Optional
 
 from card_builder import CardBuilderFactory
-from config_enums import ImageProviderType
+from config_enums import ImageProviderType, ImageLayout
 from deck_builder import DeckBuilder
 from flask import Flask, request, send_file
 from input_parameters import InputParameters
@@ -33,6 +34,9 @@ class Server(ABC):
         if config.get('image_provider') != ImageProviderType.LOCAL:
             return BadRequest('Only local images supported')
 
+        if config.get('output_image_layout') == ImageLayout.SINGLETON:
+            return BadRequest('Only the sheet layout is supported')
+
         # override the image to the server folder
         config['local_assets_folder'] = Server.assets_folder
 
@@ -41,21 +45,33 @@ class Server(ABC):
             return BadRequest('Decklist file required')
 
         with io.TextIOWrapper(decklist.stream, encoding='utf-8') as dls:
-            cards = csv.DictReader(dls.readlines())
+            cards = list(csv.DictReader(dls.readlines()))
 
         params = InputParameters(config, cards, '')
 
+        if len(params.decklist) == 0:
+            return BadRequest('Empty decklist')
+
         card_builder = CardBuilderFactory.build(params.config)
-        deck_builder = DeckBuilder(card_builder)
+        deck_builder = DeckBuilder(card_builder, params.config)
         deck = deck_builder.build(params.deck_name, params.decklist)
 
-        with deck.render() as deck_image:
+        
+        deck_images = deck.render()
+        if len(deck_images) != 1:
+            print('Warning: unexpected number of images: ' + str(len(deck_images)))
+            for deck_image in deck_images:
+                deck_image.close()
+            return BadRequest('No result images')
+
+        with contextlib.closing(deck_images[0]):
             stream = io.BytesIO()
-            deck_image.save(stream, format='png')
+            deck_images[0].save(stream, format='png')
             stream.seek(0)
             response = send_file(stream,  mimetype='image/png')
             response.headers.add('deck_size', deck.get_size())
-            return response
+
+        return response
 
 
 if __name__ == "__main__":

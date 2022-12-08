@@ -12,11 +12,12 @@ if __name__ == '__main__':
     parser.add_argument('--front_id', type=str, required=True)
     parser.add_argument('--back_id', type=str, required=True)
     parser.add_argument('--size', type=int, required=True)
+    parser.add_argument('--width', type=int, required=True)
     parser.add_argument('--output_file', type=str, required=True)
     args = parser.parse_args()
 
     result = TTSObjectBuilder.build_deck(
-        args.size, args.front_id, args.back_id)
+        args.size, args.width, args.front_id, args.back_id)
     path = os.path.split(args.output_file)[0]
     if not os.path.exists(path):
         os.makedirs(path)

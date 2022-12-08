@@ -38,7 +38,7 @@ class GoogleDriveDecklistProvider(DecklistProvider):
         self._folder_id = folder_id
 
     def get_list(self, id: str) -> list[dict[str, str]]:
-        return self._client.download_csv(id, self._folder_id)
+        return list(self._client.download_csv(id, self._folder_id))
 
 
 class LocalDecklistProvider(DecklistProvider):
@@ -47,4 +47,4 @@ class LocalDecklistProvider(DecklistProvider):
 
     def get_list(self, id: str) -> list[dict[str, str]]:
         with open(id, 'r', newline='\r\n') as file:
-            return DictReader(file.readlines(), delimiter=',')
+            return list(DictReader(file.readlines(), delimiter=','))
