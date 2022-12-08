@@ -94,7 +94,7 @@
 
     "output_image_layout": "sheet",
     "output_sheet_max_width": 10,
-    "output_x_padding": 120,
-    "output_y_padding": 120,
+    "output_x_padding": 0,
+    "output_y_padding": 0,
     "output_padding_colorstring": "#E0FFFF"
 }

@@ -17,90 +17,71 @@ from config_enums import *  # noqa
 from generator import Generator  # noqa
 
 
-class GenAndTTS(ABC):
+class GenAndTTS():
 
     _TTS_SAVED_OBJECTS_FOLDER = os.path.expanduser('~') + \
         '/Documents/My Games/Tabletop Simulator/Saves/Saved Objects'
 
-    def run(
+    def __init__(
+        self,
         tts_config_path: str,
         deck_config_path: str,
         decklist_path: str,
         output_folder: str,
         copy_to_tts: bool,
-    ) -> list[str]:
+    ):
+        with open(tts_config_path, 'r') as stream:
+            self._tts_config = json.load(stream)
+        self._deck_config_path = deck_config_path
+        self._decklist_path = decklist_path
+        self._output_folder = output_folder
+        self._copy_to_tts = copy_to_tts
 
+        self._google_client = GoogleDriveClient(
+            self._tts_config.get('google_secrets_path'))
 
-
+    def run(self) -> list[str]:
         # generate the deck, save it locally
-        params = InputParameterBuilder.build(deck_config_path, decklist_path)
-        if params.config['output_image_layout'] != ImageLayout.SHEET:
+        gen_params = InputParameterBuilder.build(
+            self._deck_config_path, self._decklist_path)
+        if gen_params.config['output_image_layout'] != ImageLayout.SHEET:
             raise Exception('Only sheet output is supported')
 
-        deck = Generator.gen_deck(params)
+        deck = Generator.gen_deck(gen_params)
 
-        deck_image_files = Generator.gen_deck_images(output_folder, deck=deck)
+        deck_image_files = Generator.gen_deck_images(
+            self._output_folder, deck=deck)
         if len(deck_image_files) != 1:
             raise Exception('Error: expected a single deck image')
 
         deck_image_file = deck_image_files[0]
         created_files = [deck_image_file]
 
-        # generate and upload TTS assets
         asset_name = os.path.split(deck_image_file)[
             1].split('.')[0] + '_tts'
-        with open(tts_config_path, 'r') as stream:
-            tts_config = json.load(stream)
 
-        google_client = GoogleDriveClient(
-            tts_config.get('google_secrets_path'))
+        front_id = self._upload_front_file(deck_image_file, asset_name)
+        back_id = self._upload_back_file()
 
-        # create/update the front image on Google drive
-        front_file_name = asset_name + '.png'
-        target_folder = tts_config.get('google_tts_folder_id')
-        front_ids = google_client.get_ids(front_file_name, target_folder)
-        if len(front_ids) == 0:
-            front_id = google_client.create_png(
-                deck_image_file, front_file_name, target_folder)
-        else:
-            front_id = front_ids[0]
-            google_client.update_png(deck_image_file, front_id)
-
-        # get the id of the back image, copy it to the target folder
-        assets_folder = tts_config.get('google_assets_folder_id')
-        back_name = tts_config.get('back_image')
-        back_ids = google_client.get_ids(back_name, assets_folder)
-        if len(back_ids) != 1:
-            raise Exception('Expected one id found for ' + back_name)
-        back_id = back_ids[0]
-        if target_folder != assets_folder:
-            google_client.copy_file(back_id, None, target_folder)
-
-        # build and save the TTS object locally and on Google drive
         tts_deck = TTSObjectBuilder.build_deck(
             deck.get_size(), deck.get_dimensions()[0], front_id, back_id)
 
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+        if not os.path.exists(self._output_folder):
+            os.makedirs(self._output_folder)
 
         tts_file_name = asset_name + '.json'
         tts_file_path = os.path.join(
-            output_folder,
+            self._output_folder,
             tts_file_name,
         )
         with open(tts_file_path, 'w+') as stream:
             json.dump(tts_deck, stream, indent=4)
         created_files.append(tts_file_path)
 
-        tts_ids = google_client.get_ids(tts_file_name, target_folder)
-        if len(tts_ids) == 0:
-            google_client.create_json(
-                tts_file_path, tts_file_name, target_folder)
-        else:
-            google_client.update_json(tts_file_path, tts_ids[0])
+        self._upload_tts_object(tts_file_path, asset_name)
 
         # optionally copy to the TTS folder for easy access in game
-        if copy_to_tts:
+        if self._copy_to_tts:
             if (os.path.exists(GenAndTTS._TTS_SAVED_OBJECTS_FOLDER)):
                 tts_copy = shutil.copy(
                     tts_file_path, GenAndTTS._TTS_SAVED_OBJECTS_FOLDER)
@@ -109,6 +90,47 @@ class GenAndTTS(ABC):
                 print('Warning: could not copy to TTS - folder does not exist')
 
         return created_files
+
+    def _upload_front_file(self, file_path: str, name: str) -> str:
+        front_file_name = name + '.png'
+        target_folder = self._tts_config.get('google_tts_folder_id')
+
+        front_ids = self._google_client.get_ids(front_file_name, target_folder)
+        if len(front_ids) == 0:
+            front_id = self._google_client.create_png(
+                file_path, front_file_name, target_folder)
+        else:
+            front_id = front_ids[0]
+            self._google_client.update_png(file_path, front_id)
+        return front_id
+
+    def _upload_back_file(self) -> str:
+        assets_folder = self._tts_config.get('google_assets_folder_id')
+        target_folder = self._tts_config.get('google_tts_folder_id')
+        back_name = self._tts_config.get('back_image')
+
+        back_ids = self._google_client.get_ids(back_name, assets_folder)
+        if len(back_ids) != 1:
+            raise Exception('Expected one id found for ' + back_name)
+        back_id = back_ids[0]
+        if target_folder != assets_folder:
+            back_id = self._google_client.copy_file(
+                back_id, None, target_folder)
+        return back_id
+
+    def _upload_tts_object(self, file_path: str, name: str) -> str:
+        back_file_name = name + '.json'
+        target_folder = self._tts_config.get('google_tts_folder_id')
+
+        tts_ids = self._google_client.get_ids(back_file_name, target_folder)
+        if len(tts_ids) == 0:
+            tts_id = self._google_client.create_json(
+                file_path, back_file_name, target_folder)
+        else:
+            tts_id = tts_ids[0]
+            self._google_client.update_json(file_path, tts_id)
+        return tts_id
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -122,13 +144,13 @@ if __name__ == "__main__":
     parser.add_argument('--copy_to_tts', action='store_true')
     args = parser.parse_args()
 
-    created_files = GenAndTTS.run(
+    created_files = GenAndTTS(
         args.tts_config,
         args.deck_config,
         args.decklist,
         args.out_folder,
         args.copy_to_tts
-    )
+    ).run()
     for file in created_files:
         if file:
             print('Saved result in ' + file)

@@ -132,7 +132,7 @@ class GoogleDriveClient:
         lookup_id = id_or_name
         if folder_id is not None:
             lookup_ids = self.get_ids(id_or_name, folder_id)
-            lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id
+            lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else lookup_id
 
         result = service.spreadsheets().get(
             spreadsheetId=lookup_id,

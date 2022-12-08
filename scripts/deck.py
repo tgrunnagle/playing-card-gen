@@ -13,13 +13,13 @@ class Deck:
     def __init__(self, name: str, config: dict):
         self._name = name
         self._cards: list[Card] = list()
-        self._layout = config['output_image_layout'] or ImageLayout.SHEET
+        self._layout = config.get('output_image_layout') or ImageLayout.SHEET
         self._padding = (
-            config['output_x_padding'] or 0,
-            config['output_y_padding'] or 0
+            config.get('output_x_padding') or 0,
+            config.get('output_y_padding') or 0
         )
-        self._padding_color = config['output_padding_colorstring'] or '#000000'
-        self._sheet_max_width = config['output_sheet_max_width'] or Deck.DEFAULT_MAX_WIDTH
+        self._padding_color = config.get('output_padding_colorstring') or '#000000'
+        self._sheet_max_width = config.get('output_sheet_max_width') or Deck.DEFAULT_MAX_WIDTH
 
     def get_size(self):
         return len(self._cards)

@@ -4,6 +4,7 @@ import contextlib
 import os
 from abc import ABC
 from typing import Optional, Tuple
+from PIL.Image import Image
 
 from card_builder import CardBuilderFactory
 from deck import Deck
@@ -35,19 +36,31 @@ class Generator(ABC):
             os.makedirs(out_folder)
 
         result_files = []
-        image_index = 0
-        deck_images = deck.render()
-        for deck_image in deck_images:
-            with contextlib.closing(deck_image):
-                file_name = deck.get_name() + '.png' \
-                    if len(deck_images)== 1 \
-                    else deck.get_name() + '_' + str(image_index) + '.png'
-
-                out_file = os.path.join(
-                    out_folder, file_name)
-                deck_image.save(out_file, bitmap_format='png')
-
-            image_index = image_index + 1
-            result_files.append(out_file)
+        result_files.extend(
+            list(
+                map(
+                    Generator._save_deck_image,
+                    zip(
+                        deck.render(),
+                        [
+                            Generator._get_output_path(
+                                out_folder, deck.get_name(), i)
+                            for i in range(deck.get_size())
+                        ]
+                    )
+                )
+            )
+        )
 
         return result_files
+
+    def _save_deck_image(image_and_path: Tuple[Image, str]) -> str:
+        with contextlib.closing(image_and_path[0]):
+            image_and_path[0].save(image_and_path[1], bitmap_format='png')
+        return image_and_path[1]
+
+    def _get_output_path(out_folder: str, deck_name: str, image_index: int) -> str:
+        return os.path.join(
+            out_folder,
+            deck_name + '_' + str(image_index) + '.png'
+        )
