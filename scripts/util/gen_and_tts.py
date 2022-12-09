@@ -109,13 +109,15 @@ class GenAndTTS():
         target_folder = self._tts_config.get('google_tts_folder_id')
         back_name = self._tts_config.get('back_image')
 
-        back_ids = self._google_client.get_ids(back_name, assets_folder)
-        if len(back_ids) != 1:
-            raise Exception('Expected one id found for ' + back_name)
-        back_id = back_ids[0]
-        if target_folder != assets_folder:
+        back_ids = self._google_client.get_ids(back_name, target_folder)
+        if len(back_ids) == 0:
+            asset_back_ids = self._google_client.get_ids(back_name, assets_folder)
+            if len(asset_back_ids) == 0:
+                raise Exception('Could not found back in assets folder.')
             back_id = self._google_client.copy_file(
-                back_id, None, target_folder)
+                asset_back_ids[0], None, target_folder)
+        else:
+            back_id = back_ids[0]
         return back_id
 
     def _upload_tts_object(self, file_path: str, name: str) -> str:

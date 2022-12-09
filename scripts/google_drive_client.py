@@ -24,44 +24,56 @@ class GoogleDriveClient:
         self._secrets_file = secrets_file
         self._cached_creds: Optional[Credentials] = None
 
-    def copy_file(self, id_or_name: str, source_folder: Optional[str], target_folder: str) -> str:
-        creds = self._get_creds()
-        
-        lookup_id = id_or_name
-        if source_folder is not None:
-            lookup_ids = self.get_ids(id_or_name, source_folder)
-            if len(lookup_ids) != 1:
-                raise Exception('Expected a single source file.')
-            lookup_id = lookup_ids[0]
-
-        service = build('drive', 'v3', credentials=creds)
-
-        copy = service.files().copy(
-            fileId=lookup_id,
-            fields='id',
-            body={
-                'parents': [target_folder]
-            }
-        ).execute()
-        return copy.get('id')
-
     def create_json(self, source: str, target_name: str, target_folder_id: str) -> str:
         return self._create_file('application/json', source, target_name, target_folder_id)
 
     def create_png(self, source: str, target_name: str, target_folder_id: str) -> str:
         return self._create_file('image/png', source, target_name, target_folder_id)
 
+    def create_csv(self, name: str, target_folder_id: str) -> str:
+        creds = self._get_creds()
+        service = build('sheets', 'v4', credentials=creds)
+        metadata = {
+            'properties': {
+                'title': name,
+            },
+        }
+        spreadsheet = service.spreadsheets().create(
+            body=metadata,
+            fields='spreadsheetId').execute()
+        id = spreadsheet.get('spreadsheetId')
+
+        driveService = build('drive', 'v3', credentials=creds)
+        file = driveService.files().get(
+            fileId=id,
+            fields='parents').execute()
+        oldParents = ",".join(file.get('parents'))
+        file = driveService.files().update(
+            fileId=id,
+            addParents=target_folder_id,
+            removeParents=oldParents).execute()
+        return id
+
     def _create_file(self, mime_type: str, source: str, target_name: str, target_folder_id: str) -> str:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
         media = MediaFileUpload(source, mimetype=mime_type)
-        metadata = {
-            'name': target_name,
-            'parents': [target_folder_id]
-        }
         file = service.files().create(
-            body=metadata,
-            media_body=media).execute()
+            body={
+                'name': target_name,
+                'parents': [target_folder_id]
+            },
+            media_body=media
+        ).execute()
+
+        service.permissions().create(
+            fileId=file.get('id'),
+            body={
+                'role': 'writer',
+                'type': 'anyone',
+            },
+        ).execute()
+
         return file.get('id')
 
     def update_json(self, source: str, target_id: str):
@@ -100,30 +112,6 @@ class GoogleDriveClient:
                 _, done = downloader.next_chunk()
             with open(output_file_name, 'wb') as f:
                 f.write(stream.getbuffer())
-
-    def create_csv(self, name: str, target_folder_id: str) -> str:
-        creds = self._get_creds()
-        service = build('sheets', 'v4', credentials=creds)
-        metadata = {
-            'properties': {
-                'title': name,
-            },
-        }
-        spreadsheet = service.spreadsheets().create(
-            body=metadata,
-            fields='spreadsheetId').execute()
-        id = spreadsheet.get('spreadsheetId')
-
-        driveService = build('drive', 'v3', credentials=creds)
-        file = driveService.files().get(
-            fileId=id,
-            fields='parents').execute()
-        oldParents = ",".join(file.get('parents'))
-        file = driveService.files().update(
-            fileId=id,
-            addParents=target_folder_id,
-            removeParents=oldParents).execute()
-        return id
 
     def download_csv(self, id_or_name: str, folder_id: Optional[str]) -> csv.DictReader:
         creds = self._get_creds()
@@ -195,29 +183,52 @@ class GoogleDriveClient:
             if page_token is None:
                 break
 
-        file_ids = list(
-            map(lambda f: (f.get('id') or '', f.get('name') or '', f.get('mimeType') or ''), search_results))
+        file_ids = map(lambda f: (f.get('id') or '', f.get('name') or '', f.get('mimeType') or ''), search_results)
         for (id, name, mtype) in file_ids:
 
-            if name.endswith('.png'):
-                out_name = os.path.join(output_folder, name)
-                self.download_png(id, out_name, None)
+            try:
+                if mtype == 'image/png':
+                    out_name = os.path.join(output_folder, name)
+                    self.download_file(id, out_name, None)
 
-            elif mtype == 'application/vnd.google-apps.spreadsheet':
-                out_name = os.path.join(
-                    output_folder, name.split('.')[0] + '.csv')
-                reader: csv.DictReader = self.download_csv(id, None)
-                with open(out_name, 'w+') as out_file:
-                    writer = csv.DictWriter(
-                        out_file, fieldnames=reader.fieldnames)
-                    writer.writeheader()
-                    for row in reader:
-                        writer.writerow(row)
+                elif mtype == 'application/vnd.google-apps.spreadsheet':
+                    out_name = os.path.join(
+                        output_folder, name.split('.')[0] + '.csv')
+                    reader: csv.DictReader = self.download_csv(id, None)
+                    with open(out_name, 'w+') as out_file:
+                        writer = csv.DictWriter(
+                            out_file, fieldnames=reader.fieldnames)
+                        writer.writeheader()
+                        for row in reader:
+                            writer.writerow(row)
 
-            else:
-                print('Warning: unsupported file "' + name + '"')
+                else:
+                    print('Warning: unsupported file "' + name + '"')
+            except Exception as e:
+                print('Warning: Failed to download ' + name + ', id ' + id)
 
-    def get_ids(self, name: str, folder_id: str) -> list[str]:
+    def copy_file(self, id_or_name: str, source_folder: Optional[str], target_folder: str) -> str:
+        creds = self._get_creds()
+
+        lookup_id = id_or_name
+        if source_folder is not None:
+            lookup_ids = self.get_ids(id_or_name, source_folder)
+            if len(lookup_ids) != 1:
+                raise Exception('Expected a single source file.')
+            lookup_id = lookup_ids[0]
+
+        service = build('drive', 'v3', credentials=creds)
+
+        copy = service.files().copy(
+            fileId=lookup_id,
+            fields='id',
+            body={
+                'parents': [target_folder]
+            }
+        ).execute()
+        return copy.get('id')
+
+    def get_ids(self, name: Optional[str], folder_id: str) -> list[str]:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
 
@@ -226,7 +237,9 @@ class GoogleDriveClient:
         while True:
             # pylint: disable=maybe-no-member
             response = service.files().list(
-                q=F"name='{name}' and '{folder_id}' in parents",
+                q=F"name='{name}' and '{folder_id}' in parents"
+                if name is not None
+                else F"'{folder_id}' in parents",
                 spaces='drive',
                 fields='nextPageToken, files(id)',
                 pageToken=page_token,
@@ -237,6 +250,20 @@ class GoogleDriveClient:
             if page_token is None:
                 break
         return list(map(lambda f: f.get('id'), files))
+
+    def delete_folder_contents(self, folder_id: str) -> int:
+        ids = self.get_ids(None, folder_id)
+        if len(ids) == 0:
+            return 0
+
+        return len(list(map(self.delete_file, ids)))
+
+    def delete_file(self, file_id: str):
+        creds = self._get_creds()
+        service = build('drive', 'v3', credentials=creds)
+        service.files().delete(
+            fileId=file_id
+        ).execute()
 
     def _get_creds(self) -> Credentials:
         if self._cached_creds is not None and self._cached_creds.valid:

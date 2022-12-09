@@ -1,16 +1,15 @@
 #!/usr/bin/python
 import argparse
 import os
-from abc import ABC
-from typing import Optional
 
 from requests import request
 
 
-class GenRemote(ABC):
+class GenRemote():
 
+    @staticmethod
     def run(
-        config_path: str, decklist_path: str, output_folder: str, port: Optional[int]
+        config_path: str, decklist_path: str, output_folder: str, port: int | None
     ) -> str:
 
         if not os.path.exists(output_folder):
