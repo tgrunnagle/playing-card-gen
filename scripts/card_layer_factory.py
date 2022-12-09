@@ -24,10 +24,6 @@ class CardLayerFactory(ABC):
         
         for layer_config in layer_configs:
             layer_type: CardLayerType = layer_config.get('type')
-            font_file = CardLayerFactory._get_font_file(
-                config,
-                layer_config,
-            )
 
             if layer_type == CardLayerType.STATIC_TEXT:
                 layers.append(BasicTextLayer(

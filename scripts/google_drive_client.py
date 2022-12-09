@@ -63,6 +63,13 @@ class GoogleDriveClient:
             fileId=id,
             addParents=target_folder_id,
             removeParents=oldParents).execute()
+        driveService.permissions().create(
+            fileId=id,
+            body={
+                'role': 'writer',
+                'type': 'anyone',
+            },
+        ).execute()
         return id
 
     def _create_file(self, mime_type: str, source: str, target_name: str, target_folder_id: str) -> str:
@@ -162,13 +169,21 @@ class GoogleDriveClient:
     def create_folder(self, name: str, parent_id: str) -> str:
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
-        file_metadata = {
-            'name': name,
-            'mimeType': 'application/vnd.google-apps.folder',
-            'parents': [parent_id]
-        }
-        file = service.files().create(body=file_metadata,
-                                      fields='id').execute()
+        file = service.files().create(
+            body={
+                'name': name,
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [parent_id]
+            },
+            fields='id',
+        ).execute()
+        service.permissions().create(
+            fileId=file.get('id'),
+            body={
+                'role': 'writer',
+                'type': 'anyone',
+            },
+        ).execute()
         return file.get('id')
 
     def download_folder(self, folder_id: str, output_folder: str):

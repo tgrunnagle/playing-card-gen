@@ -17,6 +17,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     client = GoogleDriveClient(args.creds)
+    existing_ids = client.get_ids(args.name, args.folder_id)
+    if len(existing_ids) > 0:
+        print('Warning: sheet already exists')
+        sys.exit(1)
 
     id = client.create_csv(args.name, args.folder_id)
-    print('New sheet id is ' + id)
+    print('Create sheet ' + id)

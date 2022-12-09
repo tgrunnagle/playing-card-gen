@@ -44,8 +44,8 @@ class Server(ABC):
         if decklist is None:
             return BadRequest('Decklist file required')
 
-        with io.TextIOWrapper(decklist.stream, encoding='utf-8') as dls:
-            cards = list(csv.DictReader(dls.readlines()))
+        with io.TextIOWrapper(decklist.stream, encoding='utf-8') as stream:
+            cards = list(csv.DictReader(stream.readlines()))
 
         params = InputParameters(config, cards, '')
 
@@ -56,12 +56,10 @@ class Server(ABC):
         deck_builder = DeckBuilder(card_builder, params.config)
         deck = deck_builder.build(params.deck_name, params.decklist)
 
-        
         deck_images = deck.render()
         if len(deck_images) != 1:
             print('Warning: unexpected number of images: ' + str(len(deck_images)))
-            for deck_image in deck_images:
-                deck_image.close()
+            list(map(lambda i: i.close(), deck_images))
             return BadRequest('No result images')
 
         with contextlib.closing(deck_images[0]):
@@ -69,7 +67,6 @@ class Server(ABC):
             deck_images[0].save(stream, format='png')
             stream.seek(0)
             response = send_file(stream,  mimetype='image/png')
-            response.headers.add('deck_size', deck.get_size())
 
         return response
 
