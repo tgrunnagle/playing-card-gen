@@ -19,5 +19,6 @@ class DeckBuilder:
         deck = Deck(name, self._config)
         for card_config in cards_config:
             if not bool(card_config.get('skip')):
-                deck.add_card(self._cb.build(card_config))
+                for _ in range(int(card_config.get('count') or 1)):
+                    deck.add_card(self._cb.build(card_config))
         return deck

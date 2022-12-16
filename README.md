@@ -18,7 +18,7 @@ python scripts/util/gen.py -h
 ```
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters.
 ```
-python ./scripts/util/gen.py --config './example/example_config.json' --decklist './example/example.csv' --out_folder './temp/out/'
+python ./scripts/util/gen.py --config './example/example_config.json' --decklist './example/assets/example.csv' --out_folder './temp/out/'
 ```
 
 ## To run in a Docker container - recommended
@@ -29,7 +29,7 @@ docker run -p 8084:8084 --gpus all --rm -it $(docker build -q --tag "playing-car
 ```
 To call the server:
 ```
-python ./scripts/util/gen_remote.py --config "./example/example_config.json" --decklist "./example/example.csv" --port 8084 --out_folder "./temp/out"
+python ./scripts/util/gen_remote.py --config "./example/example_config.json" --decklist "./example/assets/example.csv" --port 8084 --out_folder "./temp/out"
 ```
 
 ## To run the google drive example
@@ -71,7 +71,7 @@ python ./scripts/util/google_download_folder.py --creds 'credentials.json' --sou
 
     Not having set up Google server authentication precludes this from running entirely within the Docker container, so dependencies need managed. Since it interacts with Google drive you will need to follow step 1 of running the Google example. Finally, to run this example you'll need to update the folder ids in `example/example_tts_config.json`.
 ```
-python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_config.json" --decklist "./example/example.csv" --out_folder "./temp/out" --copy_to_tts
+python ./scripts/util/gen_and_tts.py --tts_config "./example/example_tts_config.json" --deck_config "./example/example_config.json" --decklist "./example/assets/example.csv" --out_folder "./temp/out" --copy_to_tts
 ```
 
 - Manually generate the Tabletop Simulator object file. If you don't have Google drive integration set up, you can do the following to set up TTS

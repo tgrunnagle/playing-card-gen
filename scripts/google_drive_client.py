@@ -23,23 +23,29 @@ class GoogleDriveClient:
     def __init__(self, secrets_file: str):
         self._secrets_file = secrets_file
         self._cached_creds: Optional[Credentials] = None
+    
+    def create_or_update_json(self, source: str, target_folder_id: str, name: str | None) -> str:
+        return self._create_or_update_file('application/json', source, target_folder_id, name)
+    
+    def create_or_update_png(self, source: str, target_folder_id: str, name: str | None) -> str:
+        return self._create_or_update_file('image/png', source, target_folder_id, name)
 
-    def create_or_update_png(self, source: str, target_folder_id: str) -> str:
-        file_name = os.path.split(source)[1]
-        existing = self.get_ids(file_name, target_folder_id)
+    def _create_or_update_file(self, mime_type: str, source: str, target_folder_id: str, name: str | None) -> str:
+        target_name = os.path.split(source)[1] if name == None else name
+        existing = self.get_ids(target_name, target_folder_id)
         existing_id = existing[0] if len(existing) > 0 else None
 
         if existing_id is not None:
-            self.update_png(source, existing_id)
+            self._update_file(mime_type, source, existing_id)
             return existing_id
         else:
-            return self.create_png(source, file_name, target_folder_id)
+            return self._create_file(mime_type, source, target_folder_id, target_name)
 
-    def create_json(self, source: str, target_name: str, target_folder_id: str) -> str:
-        return self._create_file('application/json', source, target_name, target_folder_id)
+    def create_json(self, source: str, target_folder_id: str, name: str | None) -> str:
+        return self._create_file('application/json', source, target_folder_id, name)
 
-    def create_png(self, source: str, target_name: str, target_folder_id: str) -> str:
-        return self._create_file('image/png', source, target_name, target_folder_id)
+    def create_png(self, source: str, target_folder_id: str, name: str | None) -> str:
+        return self._create_file('image/png', source, target_folder_id, name)
 
     def create_csv(self, name: str, target_folder_id: str) -> str:
         creds = self._get_creds()
@@ -72,7 +78,8 @@ class GoogleDriveClient:
         ).execute()
         return id
 
-    def _create_file(self, mime_type: str, source: str, target_name: str, target_folder_id: str) -> str:
+    def _create_file(self, mime_type: str, source: str, target_folder_id: str, name: str | None) -> str:
+        target_name = os.path.split(source)[1] if name == None else name
         creds = self._get_creds()
         service = build('drive', 'v3', credentials=creds)
         media = MediaFileUpload(source, mimetype=mime_type)
@@ -117,9 +124,6 @@ class GoogleDriveClient:
         lookup_id = id_or_name
         if folder_id is not None:
             lookup_ids = self.get_ids(id_or_name, folder_id)
-            if len(lookup_ids) > 1:
-                print('Warning: found ' + str(len(lookup_ids)) +
-                      ' files for "' + id + '"')
             lookup_id = lookup_ids[0] if len(lookup_ids) > 0 else id_or_name
 
         request = service.files().get_media(fileId=lookup_id)
@@ -198,7 +202,7 @@ class GoogleDriveClient:
         while True:
             # pylint: disable=maybe-no-member
             response = service.files().list(
-                q=F"'{folder_id}' in parents",
+                q=F"'{folder_id}' in parents and trashed=false",
                 spaces='drive',
                 fields='nextPageToken, files(id, name, mimeType)',
                 pageToken=page_token,
@@ -236,23 +240,39 @@ class GoogleDriveClient:
     def copy_file(self, id_or_name: str, source_folder: Optional[str], target_folder: str) -> str:
         creds = self._get_creds()
 
-        lookup_id = id_or_name
+        source_id = id_or_name
         if source_folder is not None:
-            lookup_ids = self.get_ids(id_or_name, source_folder)
-            if len(lookup_ids) != 1:
-                raise Exception('Expected a single source file.')
-            lookup_id = lookup_ids[0]
+            ids = self.get_ids(id_or_name, source_folder)
+            source_id = ids[0] if len(ids) > 0 else id_or_name
+        name = self.get_name(source_id)
+
+        # clean up any copies in the target
+        target_ids = self.get_ids(name, target_folder)
+        for target_id in target_ids:
+            self.delete_file(target_id)
 
         service = build('drive', 'v3', credentials=creds)
 
         copy = service.files().copy(
-            fileId=lookup_id,
+            fileId=source_id,
             fields='id',
             body={
                 'parents': [target_folder]
             }
         ).execute()
         return copy.get('id')
+
+    def get_name(self, id: str) -> str:
+        creds = self._get_creds()
+        service = build('drive', 'v3', credentials=creds)
+
+        response = service.files().get(
+            fileId=id,
+            fields='name'
+        ).execute()
+
+        return response.get('name')
+
 
     def get_ids(self, name: Optional[str], folder_id: str) -> list[str]:
         creds = self._get_creds()
@@ -263,7 +283,7 @@ class GoogleDriveClient:
         while True:
             # pylint: disable=maybe-no-member
             response = service.files().list(
-                q=F"name='{name}' and '{folder_id}' in parents"
+                q=F"name='{name}' and '{folder_id}' in parents and trashed=false"
                 if name is not None
                 else F"'{folder_id}' in parents",
                 spaces='drive',

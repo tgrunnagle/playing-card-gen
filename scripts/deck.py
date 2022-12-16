@@ -55,6 +55,9 @@ class Deck:
         deck_image = None
         for y in range(num_h):
             for x in range(num_w):
+                if card_index == len(self._cards):
+                    break
+                
                 card = self._cards[card_index]
                 card_index = card_index + 1
 

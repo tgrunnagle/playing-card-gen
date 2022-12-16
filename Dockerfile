@@ -1,3 +1,5 @@
+#
+# docker run -p 8084:8084 --gpus all --rm -it $(docker build -q --tag "playing-card-gen:latest" --build-arg ASSETS_FOLDER="./example/assets/" --build-arg PORT=8084 .)
 FROM python:3.11.0-bullseye
 
 ARG ASSETS_FOLDER="example/assets/"

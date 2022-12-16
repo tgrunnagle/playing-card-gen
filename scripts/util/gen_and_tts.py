@@ -41,14 +41,13 @@ class GenAndTTS():
             self._tts_config.get('google_secrets_path'))
 
     def run(self) -> list[str]:
-        # generate the deck, save it locally
         gen_params = InputParameterBuilder.build(
             self._deck_config_path, self._decklist_path)
         if gen_params.config['output_image_layout'] != ImageLayout.SHEET:
             raise Exception('Only sheet output is supported')
 
+        # generate the deck, save it locally
         deck = Generator.gen_deck(gen_params)
-
         deck_image_files = Generator.gen_deck_images(
             self._output_folder, deck=deck)
         if len(deck_image_files) != 1:
@@ -60,9 +59,10 @@ class GenAndTTS():
         asset_name = os.path.split(deck_image_file)[
             1].split('.')[0] + '_tts'
 
-        front_id = self._upload_front_file(deck_image_file, asset_name)
-        back_id = self._upload_back_file()
+        front_id = self._upload_front_file(deck_image_file, asset_name + '.png')
+        back_id = self._copy_back_file()
 
+        # build the TTS objects, then upload them
         tts_deck = TTSObjectBuilder.build_deck(
             deck.get_size(), deck.get_dimensions()[0], front_id, back_id)
 
@@ -78,7 +78,7 @@ class GenAndTTS():
             json.dump(tts_deck, stream, indent=4)
         created_files.append(tts_file_path)
 
-        self._upload_tts_object(tts_file_path, asset_name)
+        self._upload_tts_file(tts_file_path, tts_file_name)
 
         # optionally copy to the TTS folder for easy access in game
         if self._copy_to_tts:
@@ -92,46 +92,22 @@ class GenAndTTS():
         return created_files
 
     def _upload_front_file(self, file_path: str, name: str) -> str:
-        front_file_name = name + '.png'
         target_folder = self._tts_config.get('google_tts_folder_id')
+        return self._google_client.create_or_update_png(file_path, target_folder, name)
 
-        front_ids = self._google_client.get_ids(front_file_name, target_folder)
-        if len(front_ids) == 0:
-            front_id = self._google_client.create_png(
-                file_path, front_file_name, target_folder)
-        else:
-            front_id = front_ids[0]
-            self._google_client.update_png(file_path, front_id)
-        return front_id
-
-    def _upload_back_file(self) -> str:
+    def _copy_back_file(self) -> str:
         assets_folder = self._tts_config.get('google_assets_folder_id')
         target_folder = self._tts_config.get('google_tts_folder_id')
         back_name = self._tts_config.get('back_image')
 
-        back_ids = self._google_client.get_ids(back_name, target_folder)
-        if len(back_ids) == 0:
-            asset_back_ids = self._google_client.get_ids(back_name, assets_folder)
-            if len(asset_back_ids) == 0:
-                raise Exception('Could not found back in assets folder.')
-            back_id = self._google_client.copy_file(
-                asset_back_ids[0], None, target_folder)
-        else:
-            back_id = back_ids[0]
+        back_id = self._google_client.copy_file(
+            back_name, assets_folder, target_folder)
+
         return back_id
 
-    def _upload_tts_object(self, file_path: str, name: str) -> str:
-        back_file_name = name + '.json'
+    def _upload_tts_file(self, file_path: str, name: str) -> str:
         target_folder = self._tts_config.get('google_tts_folder_id')
-
-        tts_ids = self._google_client.get_ids(back_file_name, target_folder)
-        if len(tts_ids) == 0:
-            tts_id = self._google_client.create_json(
-                file_path, back_file_name, target_folder)
-        else:
-            tts_id = tts_ids[0]
-            self._google_client.update_json(file_path, tts_id)
-        return tts_id
+        return self._google_client.create_or_update_json(file_path, target_folder, name)
 
 
 if __name__ == "__main__":
