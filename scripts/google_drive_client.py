@@ -24,6 +24,17 @@ class GoogleDriveClient:
         self._secrets_file = secrets_file
         self._cached_creds: Optional[Credentials] = None
 
+    def create_or_update_png(self, source: str, target_folder_id: str) -> str:
+        file_name = os.path.split(source)[1]
+        existing = self.get_ids(file_name, target_folder_id)
+        existing_id = existing[0] if len(existing) > 0 else None
+
+        if existing_id is not None:
+            self.update_png(source, existing_id)
+            return existing_id
+        else:
+            return self.create_png(source, file_name, target_folder_id)
+
     def create_json(self, source: str, target_name: str, target_folder_id: str) -> str:
         return self._create_file('application/json', source, target_name, target_folder_id)
 

@@ -54,9 +54,12 @@ This will print the Id of the created spreadsheet, `<decklist_id>`. However, you
 ### 3. Upload images
 To upload an image `<image_file>` in `<folder_id>`:
 ```
-python ./scripts/util/google_upload_png.py --creds './credentials.json' --file <image_file> --name 'example_image.png' --folder_id '<folder_id>'
+python ./scripts/util/google_upload_png.py --creds './credentials.json' --source <local_file> --target_folder '<remote_folder_id>'
 ```
-Alternatively specify `--update_id` to update an existing image. You can use the images in `example/assets/images/`.
+Alternatively you can upload a folder of `.png`s:
+```
+python ./scripts/util/google_upload_folder.py --creds './credentials.json' --source_folder <local_folder> --target_folder '<remote_folder_id>'
+```
 
 ### 4. Generate cards
 Update `example/example_google_config.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
