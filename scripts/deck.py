@@ -83,7 +83,7 @@ class Deck:
 
     def _render_card(self, card: Card) -> Image:
         image = card.render()
-        for fn in [self._pad, self._scale]:
+        for fn in [self._scale, self._pad]:
             image = self._then_close(fn, image)
 
         return image

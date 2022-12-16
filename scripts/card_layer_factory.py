@@ -6,7 +6,7 @@ from config_enums import CardLayerType
 from image_card_layers import BasicImageLayer, SymbolRowImageLayer
 from image_provider import ImageProvider
 from placement import *
-from text_card_layers import BasicTextLayer, EmbeddedImageTextCardLayer
+from text_card_layers import EmbeddedImageTextCardLayer
 import os
 from typing import Optional
 from helpers import Helpers as h
@@ -27,48 +27,56 @@ class CardLayerFactory(ABC):
             layer_type: CardLayerType = layer_config.get('type')
 
             if layer_type == CardLayerType.STATIC_TEXT:
-                layers.append(BasicTextLayer(
+                layers.append(EmbeddedImageTextCardLayer(
                     h.require(layer_config, 'text'),
                     parse_placement(h.require(layer_config, 'place')),
-                    # optional params
-                    layer_config.get('max_font_size') or config.get(
+                    image_provider,
+                    # optional
+                    max_font_size=layer_config.get('max_font_size') or config.get(
                         'text_max_font_size'),
-                    CardLayerFactory._get_font_file(config, layer_config),
-                    layer_config.get('spacing_ratio') or config.get(
+                    font_file=CardLayerFactory._get_font_file(config, layer_config),
+                    spacing_ratio=layer_config.get('spacing_ratio') or config.get(
                         'text_spacing_ratio'),
-                    layer_config.get('v_alignment'),
+                    v_alignment=layer_config.get('v_alignment'),
+                    h_alignment=layer_config.get('h_alignment'),
+                    color=layer_config.get('color') or config.get('text_color')
                 ))
 
             elif layer_type == CardLayerType.TEXT:
-                layers.append(BasicTextLayer(
-                    card.get(h.require(layer_config, 'prop')),
+                layers.append(EmbeddedImageTextCardLayer(
+                    h.require(card, h.require(layer_config, 'prop')),
                     parse_placement(h.require(layer_config, 'place')),
+                    image_provider,
                     # optional params
-                    layer_config.get('max_font_size') or config.get(
+                    max_font_size=layer_config.get('max_font_size') or config.get(
                         'text_max_font_size'),
-                    CardLayerFactory._get_font_file(config, layer_config),
-                    layer_config.get('spacing_ratio') or config.get(
+                    font_file=CardLayerFactory._get_font_file(config, layer_config),
+                    spacing_ratio=layer_config.get('spacing_ratio') or config.get(
                         'text_spacing_ratio'),
-                    layer_config.get('v_alignment'),
+                    v_alignment=layer_config.get('v_alignment'),
+                    h_alignment=layer_config.get('h_alignment'),
+                    color=layer_config.get('color') or config.get('text_color')
                 ))
 
             elif layer_type == CardLayerType.EMBEDDED_TEXT:
                 layers.append(EmbeddedImageTextCardLayer(
-                    card.get(h.require(layer_config, 'prop')),
+                    h.require(card, h.require(layer_config, 'prop')),
                     parse_placement(h.require(layer_config, 'place')),
                     image_provider,
-                    h.require(config, 'text_embed_symbol_id_map'),
                     # optional params
-                    layer_config.get('max_font_size') or config.get(
+                    embedding_map=h.require(config, 'text_embed_symbol_id_map'),
+                    max_font_size=layer_config.get('max_font_size') or config.get(
                         'text_max_font_size'),
-                    CardLayerFactory._get_font_file(config, layer_config),
-                    layer_config.get('spacing_ratio') or config.get(
+                    font_file=CardLayerFactory._get_font_file(config, layer_config),
+                    spacing_ratio=layer_config.get('spacing_ratio') or config.get(
                         'text_spacing_ratio'),
-                    layer_config.get('v_alignment'),
-                    layer_config.get('embed_v_offset_ratio') or config.get(
+                    v_alignment=layer_config.get('v_alignment'),
+                    h_alignment=None, # alignment not compatible with embedded image placement
+                    embed_v_offset_ratio=layer_config.get('embed_v_offset_ratio') or config.get(
                         'text_embed_v_offset_ratio'),
-                    layer_config.get('embed_size_ratio') or config.get(
+                    embed_size_ratio=layer_config.get('embed_size_ratio') or config.get(
                         'text_embed_size_ratio'),
+                    color=layer_config.get('color') or config.get('text_color')
                 ))
 
             elif layer_type == CardLayerType.STATIC_IMAGE:
@@ -92,8 +100,8 @@ class CardLayerFactory(ABC):
                     h.require(config, 'symbol_id_map'),
                     parse_placement(h.require(layer_config, 'place')),
                     # optional params
-                    layer_config.get('spacing'),
-                    layer_config.get('direction'),
+                    spacing=layer_config.get('spacing'),
+                    direction=layer_config.get('direction'),
                 ))
 
             else:

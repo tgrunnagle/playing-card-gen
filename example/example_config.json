@@ -3,6 +3,7 @@
     "decklist_provider": "local",
     "local_assets_folder": "./example/assets/",
 
+
     "default_card_type": "default",
     "w": 750,
     "h": 1050,
@@ -35,9 +36,11 @@
                     "x": 50,
                     "y": 40,
                     "w": 650,
-                    "h": 110
+                    "h": 100
                 },
-                "max_font_size": 48
+                "max_font_size": 48,
+                "h_alignment": "center",
+                "color": "#91232e"
             },
             {
                 "type": "embedded_text",
@@ -104,18 +107,20 @@
                     "x": 50,
                     "y": 40,
                     "w": 650,
-                    "h": 115
+                    "h": 100
                 },
-                "max_font_size": 48
+                "max_font_size": 48,
+                "h_alignment": "center",
+                "color": "#91232e"
             },
             {
                 "type": "embedded_text",
                 "prop": "body",
                 "place": {
                     "x": 50,
-                    "y": 200,
+                    "y": 150,
                     "w": 650,
-                    "h": 800
+                    "h": 750
                 },
                 "spacing_ratio": 0.3,
                 "v_alignment": "middle",
@@ -149,6 +154,7 @@
     },
     "text_embed_v_offset_ratio": -0.05,
     "text_embed_size_ratio": 1.0,
+    "text_color": "#000000",
 
     "output_image_layout": "sheet",
     "output_sheet_max_width": 10,

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from card_layer import CardLayer
-from config_enums import VerticalTextAlignment
+from config_enums import VerticalAlignment, HorizontalAlignment
 from image_card_layers import BasicImageLayer
 from image_provider import ImageProvider
 from PIL import Image, ImageDraw, ImageFont
@@ -14,67 +14,6 @@ _DEFAULT_FONT_WINDOWS = '\\Windows\\Fonts\\constan.ttf'
 _DEFAULT_FONT_MACOS = '/Library/Fonts/GeorgiaPro-CondLight.ttf'
 _DEFAULT_FONT_LINUX = '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf'
 _STARTING_FONT_SIZE = 32
-
-
-class BasicTextLayer(CardLayer):
-
-    def __init__(
-        self,
-        text: str,
-        placement: Placement,
-        max_font_size: Optional[int] = None,
-        font_file: Optional[str] = None,
-        spacing_ratio: Optional[float] = None,
-        v_alignment: Optional[VerticalTextAlignment] = None,
-    ):
-        self._text = text
-        self._placement = placement
-        self._starting_font_size = max_font_size or _STARTING_FONT_SIZE
-        self._font_file = font_file or _get_default_font_file()
-        self._spacing_ratio = spacing_ratio or 0.0
-        self._v_alignment = v_alignment or VerticalTextAlignment.TOP
-
-    def render(self, onto: Image.Image):
-        outer_box = CardLayer._move_box((0, 0), to_box(self._placement))
-        font_size = self._starting_font_size
-
-        draw = ImageDraw.Draw(onto, 'RGBA')
-        while True:
-            font = ImageFont.truetype(self._font_file, font_size)
-            spacing = int(font.getbbox(' ')[3] * self._spacing_ratio)
-            multiline_text = '\n'.join(self._split_lines_to_width(font))
-            text_box = draw.multiline_textbbox(
-                (0, 0), multiline_text, font, spacing=spacing)
-            if CardLayer._within_box(outer_box, text_box, 5):
-                break
-            font_size = font_size - 1
-            if font_size < 8:
-                print('Warning: failed to fit text in a box: ' + self._text)
-                break
-
-        v_offset = _get_v_offset(self._v_alignment, text_box, self._placement)
-        draw.multiline_text(
-            (self._placement.x, self._placement.y + v_offset),
-            multiline_text,
-            font=font,
-            fill=(0, 0, 0, 255),
-            spacing=spacing,
-        )
-
-    def _split_lines_to_width(self, font: ImageFont.FreeTypeFont) -> list[str]:
-        lines = list()
-        index = 0
-        while index < len(self._text):
-            length = _find_next_fit_length(
-                self._text, index, font, self._placement.w)
-            if length == 0:
-                print('Warning: unable to fit text a row')
-                return self._text
-
-            lines.append(self._text[index:index + length])
-            index = index + length
-
-        return lines
 
 
 class EmbeddedImageTextCardLayer(CardLayer):
@@ -89,25 +28,34 @@ class EmbeddedImageTextCardLayer(CardLayer):
         text: str,
         placement: Placement,
         image_provider: ImageProvider,
-        embedding_map: dict[str, str],
+        embedding_map: dict[str, str] = {},
         max_font_size: Optional[int] = None,
         font_file: Optional[str] = None,
         spacing_ratio: Optional[float] = None,
-        v_alignment: Optional[VerticalTextAlignment] = None,
+        v_alignment: Optional[VerticalAlignment] = None,
+        h_alignment: Optional[HorizontalAlignment] = None,
         embed_v_offset_ratio: Optional[float] = None,
-        embed_size_ratio: Optional[float] = None
+        embed_size_ratio: Optional[float] = None,
+        color: Optional[str] = None,
     ):
         self._text = text
         self._placement = placement
         self._image_provider = image_provider
         self._embedding_map = embedding_map
-        
+
         self._starting_font_size = max_font_size or _STARTING_FONT_SIZE
         self._font_file = font_file or _get_default_font_file()
         self._spacing_ratio = spacing_ratio or 0
-        self._v_alignment = v_alignment or VerticalTextAlignment.TOP
+        self._v_alignment = v_alignment or VerticalAlignment.TOP
+        self._h_alignment = h_alignment or HorizontalAlignment.LEFT
+
+        if self._h_alignment != HorizontalAlignment.LEFT and len(self._embedding_map.keys()) > 0:
+            print('Warning: embedded images not support with text aligment ' + self._h_alignment)
+            self._embedding_map = {}
+
         self._embed_v_offset_ratio = embed_v_offset_ratio or 0
         self._embed_size_ratio = embed_size_ratio or 1
+        self._color = color or '#000000'
 
     def render(self, onto: Image.Image):
         outer_box = CardLayer._move_box((0, 0), to_box(self._placement))
@@ -126,7 +74,8 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 (0, 0),
                 multiline_text,
                 font,
-                spacing=spacing)
+                spacing=spacing,
+            )
 
             if CardLayer._within_box(outer_box, text_box, 5):
                 break
@@ -136,16 +85,19 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 print('Warning: failed to fit text in a box: ' + self._text)
                 break
 
-        v_offset = _get_v_offset(self._v_alignment, text_box, self._placement)
+        v_offset = _get_v_offset(self._v_alignment, self._placement, text_box)
+        h_offset = _get_h_offset(self._h_alignment, self._placement, text_box)
         draw.multiline_text(
-            (self._placement.x, self._placement.y + v_offset),
+            (self._placement.x + h_offset, self._placement.y + v_offset),
             multiline_text,
             font=font,
-            fill=(0, 0, 0, 255),
-            spacing=spacing)
+            fill=self._color,
+            spacing=spacing,
+            align=''+self._h_alignment,
+        )
 
         embed_v_offset = int(self._embed_v_offset_ratio * font.getbbox(' ')[3])
-        self._render_embeds(embeds, v_offset + embed_v_offset, onto)
+        self._render_embeds(embeds, (h_offset, v_offset + embed_v_offset), onto)
 
     def _split_lines_and_place_embeds(
         self,
@@ -179,7 +131,8 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 # x offset for the preceding text and the spacing due to embedding size ratio
                 x = self._placement.x \
                     + draw.textsize(padded_text[i_text:embed[0]], font)[0] \
-                    + (embed_size[1] - embed_size[1] * self._embed_size_ratio) / 2
+                    + (embed_size[1] - embed_size[1]
+                       * self._embed_size_ratio) / 2
 
                 # y offset for the preceding lines and the spacing due to embedding size ratio and v offset
                 y = self._placement.y + \
@@ -221,8 +174,10 @@ class EmbeddedImageTextCardLayer(CardLayer):
 
             embedding = self._embedding_map.get(word.strip())
             if embedding is not None:
-                (padding, embedding_size) = self._get_padding_str(embedding, draw, font)
-                embeddings.append((index + total_padding, embedding, embedding_size))
+                (padding, embedding_size) = self._get_padding_str(
+                    embedding, draw, font)
+                embeddings.append(
+                    (index + total_padding, embedding, embedding_size))
 
                 replacement_text = word.replace(word.strip(), padding)
                 new_text = new_text + \
@@ -245,12 +200,12 @@ class EmbeddedImageTextCardLayer(CardLayer):
             start = start + 1
         return start
 
-    def _render_embeds(self, embeds: list[EmbeddedImage], v_offset: int, onto: Image.Image):
+    def _render_embeds(self, embeds: list[EmbeddedImage], offset: tuple[int, int], onto: Image.Image):
         for embed in embeds:
             BasicImageLayer(
                 self._image_provider,
                 embed.image_id,
-                move_placement(0, v_offset, embed.place)
+                move_placement(offset[0], offset[1], embed.place)
             ).render(onto)
 
     # gets the padding string and the size of the embed the padding is for
@@ -299,19 +254,33 @@ def _find_next_fit_length(
 
     return end - start + 1
 
-
+# determines the vertical offset for a box the size of bbox align
 def _get_v_offset(
-    v_alignment: Optional[VerticalTextAlignment],
-    text_bbox: tuple[int, int, int, int],
+    v_alignment: Optional[VerticalAlignment],
     text_placement: Placement,
+    bbox: tuple[int, int, int, int], # left, top, right, bottom
 ) -> int:
-    if v_alignment == VerticalTextAlignment.MIDDLE:
-        v_offset = int((text_placement.h - text_bbox[3]) / 2)
-    elif v_alignment == VerticalTextAlignment.BOTTOM:
-        v_offset = int(text_placement.h - text_bbox[3])
+    if v_alignment == VerticalAlignment.MIDDLE:
+        v_offset = int((text_placement.h - (bbox[3] - bbox[1])) / 2)
+    elif v_alignment == VerticalAlignment.BOTTOM:
+        v_offset = int(text_placement.h - (bbox[3] - bbox[1]))
     else:
         v_offset = 0
     return v_offset
+
+# determines the horizontal offset for a box the size of bbox align
+def _get_h_offset(
+    h_alignment: Optional[HorizontalAlignment],
+    text_placement: Placement,
+    bbox: tuple[int, int, int, int],
+) -> int:
+    if h_alignment == HorizontalAlignment.CENTER:
+        h_offset = int((text_placement.w - (bbox[2] - bbox[0])) / 2)
+    elif h_alignment == HorizontalAlignment.RIGHT:
+        h_offset = int(text_placement.w - (bbox[2] - bbox[0]))
+    else:
+        h_offset = 0
+    return h_offset
 
 
 def _get_default_font_file() -> str:

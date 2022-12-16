@@ -32,11 +32,15 @@ class SymbolDirection(StrEnum):
     UP = 'up'
 
 
-class VerticalTextAlignment(StrEnum):
+class VerticalAlignment(StrEnum):
     TOP = 'top'
     MIDDLE = 'middle'
     BOTTOM = 'bottom'
 
+class HorizontalAlignment(StrEnum):
+    LEFT = 'left'
+    CENTER = 'center'
+    RIGHT = 'right'
 
 class ImageLayout(StrEnum):
     SHEET = 'sheet'
