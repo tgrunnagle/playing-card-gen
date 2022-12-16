@@ -4,7 +4,7 @@ from config_enums import SymbolDirection
 from image_provider import ImageProvider
 from PIL import Image
 from placement import Placement, copy_placement, to_box
-
+from typing import Optional
 
 class BasicImageLayer(CardLayer):
     def __init__(
@@ -45,12 +45,14 @@ class SymbolRowImageLayer(CardLayer):
         symbols: str,
         symbol_id_map: dict[str, str],
         initial_placement: Placement,
-        spacing: int,
-        direction: SymbolDirection
+        spacing: Optional[int] = None,
+        direction: Optional[SymbolDirection] = None
     ):
         self._inner_layers: list[CardLayer] = []
 
         placement = copy_placement(initial_placement)
+        spacing = spacing or 0
+        direction = direction or SymbolDirection.RIGHT
 
         # go backwards through the string if going right (LTR) or UP (BTT)
         for symbol in (

@@ -1,47 +1,33 @@
 #!/usr/bin/python
-from abc import ABC, abstractmethod
 
 from card import Card
 from card_layer_factory import CardLayerFactory
-from config_enums import CardBuilderType
 from image_provider import ImageProviderFactory
-from placement import *
-
-
-class CardBuilder(ABC):
-
-    @abstractmethod
-    def build(self, card_info: dict[str, str]) -> Card:
-        pass
-
-
-class CardBuilderFactory(ABC):
-
-    _DEFAULT_TYPE = CardBuilderType.BASIC
-
-    @staticmethod
-    def build(config: dict) -> CardBuilder:
-        card_type: CardBuilderType = config.get(
-            'card_type') or CardBuilderFactory._DEFAULT_TYPE
-        if card_type == CardBuilderType.BASIC:
-            return BasicCardBuilder(config)
-        else:
-            raise Exception('Unsupported card type "' + card_type + '"')
-
-
-class BasicCardBuilder(CardBuilder):
+from helpers import Helpers as h
+class CardBuilder():
 
     def __init__(
         self,
         config: dict
     ):
         self._image_provider = ImageProviderFactory.build(config)
+
+        self._default_type = h.require(config, 'default_card_type')
+        self._specs = h.require(config, 'card_specs')
+        if self._specs.get(self._default_type) == None:
+            raise Exception('Invalid card_specs missing default type')
+
+        self._w = h.require(config, 'w')
+        self._h = h.require(config, 'h')
+
         self._config = config
 
     def build(self, card_info: dict[str, str]) -> Card:
-        card = Card(self._config.get('w'), self._config.get('h'))
+        card = Card(self._w, self._h)
+        card_type = card_info.get('card_type') or self._default_type
+        layers = h.require(self._specs, card_type)
         card.add_layers(
             CardLayerFactory.build(
-                self._config, card_info, self._image_provider)
+                layers, self._config, card_info, self._image_provider)
         )
         return card

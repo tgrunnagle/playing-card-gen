@@ -45,11 +45,11 @@ class BasicTextLayer(CardLayer):
             multiline_text = '\n'.join(self._split_lines_to_width(font))
             text_box = draw.multiline_textbbox(
                 (0, 0), multiline_text, font, spacing=spacing)
-            if CardLayer._within_box(outer_box, text_box):
+            if CardLayer._within_box(outer_box, text_box, 5):
                 break
             font_size = font_size - 1
             if font_size < 8:
-                print('Warning: failed to fit text in a box')
+                print('Warning: failed to fit text in a box: ' + self._text)
                 break
 
         v_offset = _get_v_offset(self._v_alignment, text_box, self._placement)
@@ -101,6 +101,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
         self._placement = placement
         self._image_provider = image_provider
         self._embedding_map = embedding_map
+        
         self._starting_font_size = max_font_size or _STARTING_FONT_SIZE
         self._font_file = font_file or _get_default_font_file()
         self._spacing_ratio = spacing_ratio or 0
@@ -127,12 +128,12 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 font,
                 spacing=spacing)
 
-            if CardLayer._within_box(outer_box, text_box):
+            if CardLayer._within_box(outer_box, text_box, 5):
                 break
 
             font_size = font_size - 1
             if font_size < 8:
-                print('Warning: failed to fit text in a box')
+                print('Warning: failed to fit text in a box: ' + self._text)
                 break
 
         v_offset = _get_v_offset(self._v_alignment, text_box, self._placement)
@@ -276,8 +277,6 @@ def _find_next_fit_length(
     start: int,
     font: ImageFont.FreeTypeFont,
     width_px: int
-
-
 ) -> int:
     newline = text[start:].find('\n')
     end = start + newline if newline != -1 else len(text) - 1

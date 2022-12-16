@@ -58,7 +58,7 @@ python ./scripts/util/google_upload_folder.py --creds './credentials.json' --sou
 4. Generate cards
 Update `example/example_config_google.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
 ```
-python ./scripts/util/gen.py --config './example/example_config_google.json' --decklist '<decklist_name>' --output_folder 'temp/out/'
+python ./scripts/util/gen.py --config './example/example_config_google.json' --decklist '<decklist_name>' --out_folder 'temp/out/'
 ```
 
 ## Utility scripts

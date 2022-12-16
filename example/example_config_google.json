@@ -1,75 +1,140 @@
 {
-    "card_type": "basic",
-    "w": 825,
-    "h": 1125,
-    "card_layers": [
-        {
-            "type": "static_image",
-            "image": "background.png",
-            "place": {
-                "x": 0,
-                "y": 0,
-                "w": 825,
-                "h": 1125
-            }
-        },
-        {
-            "type": "image",
-            "prop": "art_name",
-            "place": {
-                "x": 20,
-                "y": 100,
-                "w": 785,
-                "h": 480
-            }
-        },
-        {
-            "type": "text",
-            "prop": "name",
-            "place": {
-                "x": 50,
-                "y": 30,
-                "w": 400,
-                "h": 100
+    "image_provider": "google",
+    "decklist_provider": "google",
+    
+    "google_secrets_path": "credentials.json",
+    "google_assets_folder_id": "19zfGDmUKP6Ok1bly6mTkqhb1Pf4GefcT",
+
+    "default_card_type": "default",
+    "w": 750,
+    "h": 1050,
+    "card_specs": {
+        "default": [
+            {
+                "type": "static_image",
+                "image": "front_background.png",
+                "place": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 750,
+                    "h": 1050
+                }
             },
-            "max_font_size": 48
-        },
-        {
-            "type": "embedded_text",
-            "prop": "body",
-            "place": {
-                "x": 50,
-                "y": 700,
-                "w": 725,
-                "h": 350
+            {
+                "type": "image",
+                "prop": "art_name",
+                "place": {
+                    "x": 0,
+                    "y": 115,
+                    "w": 750,
+                    "h": 410
+                }
             },
-            "spacing_ratio": 0.3,
-            "v_alignment": "middle",
-            "max_font_size": 40
-        },
-        {
-            "type": "static_image",
-            "image": "frame.png",
-            "place": {
-                "x": 0,
-                "y": 0,
-                "w": 825,
-                "h": 1125
+            {
+                "type": "text",
+                "prop": "name",
+                "place": {
+                    "x": 50,
+                    "y": 40,
+                    "w": 650,
+                    "h": 110
+                },
+                "max_font_size": 48
+            },
+            {
+                "type": "embedded_text",
+                "prop": "body",
+                "place": {
+                    "x": 50,
+                    "y": 600,
+                    "w": 650,
+                    "h": 350
+                },
+                "spacing_ratio": 0.3,
+                "v_alignment": "middle",
+                "max_font_size": 40
+            },
+
+            {
+                "type": "static_image",
+                "image": "front_art_frame.png",
+                "place": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 750,
+                    "h": 1050
+                }
+            },
+            {
+                "type": "static_image",
+                "image": "front_frame.png",
+                "place": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 750,
+                    "h": 1050
+                }
+            },
+            {
+                "type": "symbol_row",
+                "prop": "cost",
+                "place": {
+                    "x": 50,
+                    "y": 500,
+                    "w": 80,
+                    "h": 80
+                },
+                "spacing": 5,
+                "direction": "right"
             }
-        },
-        {
-            "type": "symbol_row",
-            "prop": "cost",
-            "place": {
-                "x": 50,
-                "y": 580,
-                "w": 80,
-                "h": 80
+        ],
+        "no_art": [
+            {
+                "type": "static_image",
+                "image": "front_background.png",
+                "place": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 750,
+                    "h": 1050
+                }
             },
-            "spacing": 5,
-            "direction": "right"
-        }
-    ],
+            {
+                "type": "text",
+                "prop": "name",
+                "place": {
+                    "x": 50,
+                    "y": 40,
+                    "w": 650,
+                    "h": 115
+                },
+                "max_font_size": 48
+            },
+            {
+                "type": "embedded_text",
+                "prop": "body",
+                "place": {
+                    "x": 50,
+                    "y": 200,
+                    "w": 650,
+                    "h": 800
+                },
+                "spacing_ratio": 0.3,
+                "v_alignment": "middle",
+                "max_font_size": 40
+            },
+            {
+                "type": "static_image",
+                "image": "front_frame.png",
+                "place": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 750,
+                    "h": 1050
+                }
+            }
+        ]
+    },
 
     "symbol_id_map": {
         "M": "energy-magical.png",
@@ -87,9 +152,9 @@
     "text_embed_v_offset_ratio": -0.05,
     "text_embed_size_ratio": 1.0,
 
-    "image_provider": "google",
-    "decklist_provider": "google",
-    
-    "google_secrets_path": "credentials.json",
-    "google_assets_folder_id": "19zfGDmUKP6Ok1bly6mTkqhb1Pf4GefcT"
+    "output_image_layout": "sheet",
+    "output_sheet_max_width": 10,
+    "output_padding": [0, 0],
+    "output_scaling": [1, 1],
+    "output_padding_colorstring": "#E0FFFF"
 }

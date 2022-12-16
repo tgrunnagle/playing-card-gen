@@ -6,7 +6,7 @@ from abc import ABC
 from typing import Optional, Tuple
 from PIL.Image import Image
 
-from card_builder import CardBuilderFactory
+from card_builder import CardBuilder
 from deck import Deck
 from deck_builder import DeckBuilder
 from input_parameters import InputParameters
@@ -15,7 +15,7 @@ from input_parameters import InputParameters
 class Generator(ABC):
     def gen_deck(params: InputParameters) -> Deck:
 
-        card_builder = CardBuilderFactory.build(params.config)
+        card_builder = CardBuilder(params.config)
         deck_builder = DeckBuilder(card_builder, params.config)
         deck = deck_builder.build(params.deck_name, params.decklist)
         return deck

@@ -13,12 +13,13 @@ class CardLayer(ABC):
     @staticmethod
     def _within_box(
             outer: tuple[int, int, int, int],
-            inner: tuple[int, int, int, int]
+            inner: tuple[int, int, int, int],
+            padding=0,
     ) -> bool:
-        return outer[0] <= inner[0] \
-            and outer[1] <= inner[1] \
-            and outer[2] >= inner[2] \
-            and outer[3] >= inner[3]
+        return outer[0] - padding <= inner[0] \
+            and outer[1] - padding <= inner[1] \
+            and outer[2] + padding >= inner[2] \
+            and outer[3] + padding >= inner[3]
 
     @staticmethod
     def _move_box(

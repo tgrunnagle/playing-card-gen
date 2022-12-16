@@ -7,7 +7,7 @@ import json
 from abc import ABC
 from typing import Optional
 
-from card_builder import CardBuilderFactory
+from card_builder import CardBuilder
 from config_enums import ImageProviderType, ImageLayout
 from deck_builder import DeckBuilder
 from flask import Flask, request, send_file
@@ -52,7 +52,7 @@ class Server(ABC):
         if len(params.decklist) == 0:
             return BadRequest('Empty decklist')
 
-        card_builder = CardBuilderFactory.build(params.config)
+        card_builder = CardBuilder(params.config)
         deck_builder = DeckBuilder(card_builder, params.config)
         deck = deck_builder.build(params.deck_name, params.decklist)
 
