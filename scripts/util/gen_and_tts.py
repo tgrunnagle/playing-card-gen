@@ -3,10 +3,7 @@ import argparse
 import json
 import os
 import sys
-from abc import ABC
 import shutil
-
-from gen import Gen
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 

@@ -5,7 +5,6 @@
     "google_secrets_path": "credentials.json",
     "google_assets_folder_id": "19zfGDmUKP6Ok1bly6mTkqhb1Pf4GefcT",
 
-
     "default_card_type": "default",
     "w": 750,
     "h": 1050,
@@ -88,7 +87,8 @@
                     "h": 80
                 },
                 "spacing": 5,
-                "direction": "right"
+                "orientation": "horizontal",
+                "alignment": "left"
             }
         ],
         "no_art": [
@@ -140,27 +140,32 @@
             }
         ]
     },
-
-    "symbol_id_map": {
-        "M": "energy-magical.png",
-        "P": "energy-physical.png",
-        "S": "energy-spiritual.png",
-        "G": "energy-generic.png"
+    "symbols": {
+        "id_map": {
+            "M": "energy-magical.png",
+            "P": "energy-physical.png",
+            "S": "energy-spiritual.png",
+            "G": "energy-generic.png"
+        }
     },
-
-    "text_embed_symbol_id_map": {
-        "{{M}}": "energy-magical.png",
-        "{{P}}": "energy-physical.png",
-        "{{S}}": "energy-spiritual.png",
-        "{{G}}": "energy-generic.png"
+    "text": {
+        "embed_symbol_id_map": {
+            "{{M}}": "energy-magical.png",
+            "{{P}}": "energy-physical.png",
+            "{{S}}": "energy-spiritual.png",
+            "{{G}}": "energy-generic.png"
+        },
+        "embed_v_offset_ratio": -0.05,
+        "embed_size_ratio": 1.0,
+        "color": "#000000",
+        "max_font_size": 50,
+        "spacing_ratio": 1.0
     },
-    "text_embed_v_offset_ratio": -0.05,
-    "text_embed_size_ratio": 1.0,
-    "text_color": "#000000",
-
-    "output_image_layout": "sheet",
-    "output_sheet_max_width": 10,
-    "output_padding": [0, 0],
-    "output_scaling": [1, 1],
-    "output_padding_colorstring": "#E0FFFF"
+    "output": {
+        "image_layout": "sheet",
+        "sheet_max_width": 10,
+        "padding": [0, 0],
+        "scaling": [1, 1],
+        "padding_colorstring": "#E0FFFF"
+    }
 }

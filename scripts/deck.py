@@ -8,6 +8,7 @@ from card import Card
 from config_enums import ImageLayout
 from typing import Tuple
 from placement import Placement
+from helpers import Helpers as h
 
 
 class Deck:
@@ -17,13 +18,14 @@ class Deck:
     def __init__(self, name: str, config: dict):
         self._name = name
         self._cards: list[Card] = list()
-        self._layout = config.get('output_image_layout') or ImageLayout.SHEET
-        self._padding = config.get('output_padding')
-        self._scaling = config.get('output_scaling')
-        self._padding_color = config.get(
-            'output_padding_colorstring') or '#000000'
-        self._sheet_max_width = config.get(
-            'output_sheet_max_width') or Deck.DEFAULT_MAX_WIDTH
+        self._layout = h.dont_require(
+            config, 'output/image_layout') or ImageLayout.SHEET
+        self._padding = h.dont_require(config, 'output/padding')
+        self._scaling = h.dont_require(config, 'output/scaling')
+        self._padding_color = h.dont_require(
+            config, 'output/padding_colorstring') or '#000000'
+        self._sheet_max_width = h.dont_require(
+            config, 'output/sheet_max_width') or Deck.DEFAULT_MAX_WIDTH
 
     def get_size(self):
         return len(self._cards)
@@ -57,7 +59,7 @@ class Deck:
             for x in range(num_w):
                 if card_index == len(self._cards):
                     break
-                
+
                 card = self._cards[card_index]
                 card_index = card_index + 1
 
@@ -67,7 +69,8 @@ class Deck:
                         y_step = card_image.height
                         deck_pix_w = card_image.width * num_w
                         deck_pix_h = card_image.height * num_h
-                        deck_image = PILImage.new('RGBA', (deck_pix_w, deck_pix_h))
+                        deck_image = PILImage.new(
+                            'RGBA', (deck_pix_w, deck_pix_h))
 
                     deck_image.paste(im=card_image, box=(
                         x * x_step, y * y_step, (x + 1) * x_step, (y + 1) * y_step))

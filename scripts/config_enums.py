@@ -25,11 +25,9 @@ class ImageProviderType(StrEnum):
     GOOGLE = 'google'
 
 
-class SymbolDirection(StrEnum):
-    RIGHT = 'right'
-    LEFT = 'left'
-    DOWN = 'down'
-    UP = 'up'
+class Orientation(StrEnum):
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
 
 
 class VerticalAlignment(StrEnum):

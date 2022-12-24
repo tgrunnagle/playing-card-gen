@@ -1,10 +1,11 @@
 #!/usr/bin/python
 from card_layer import CardLayer
-from config_enums import SymbolDirection
+from config_enums import Orientation, VerticalAlignment, HorizontalAlignment
 from image_provider import ImageProvider
 from PIL import Image
-from placement import Placement, copy_placement, to_box
+from placement import Placement, copy_placement, to_box, move_placement
 from typing import Optional
+import math
 
 class BasicImageLayer(CardLayer):
     def __init__(
@@ -46,41 +47,53 @@ class SymbolRowImageLayer(CardLayer):
         symbol_id_map: dict[str, str],
         initial_placement: Placement,
         spacing: Optional[int] = None,
-        direction: Optional[SymbolDirection] = None
+        orientation: Optional[Orientation] = None,
+        alignment: Optional[VerticalAlignment | HorizontalAlignment] = None
     ):
         self._inner_layers: list[CardLayer] = []
 
-        placement = copy_placement(initial_placement)
         spacing = spacing or 0
-        direction = direction or SymbolDirection.RIGHT
+        orientation = orientation or Orientation.HORIZONTAL
+        alignment = alignment or HorizontalAlignment.LEFT
+        symbols = symbols.strip().replace(' ', '')
 
-        # go backwards through the string if going right (LTR) or UP (BTT)
-        for symbol in (
-                symbols
-            if direction in [SymbolDirection.RIGHT, SymbolDirection.DOWN]
-            else symbols[::-1]
-        ):
-            if symbol.isspace():
-                continue
+        if orientation == Orientation.HORIZONTAL:
+            if alignment == HorizontalAlignment.CENTER:
+                for_symbols = int(len(symbols) / 2. * initial_placement.w)
+                for_spacing = int((len(symbols) - 1) / 2 * spacing)
+                offset = (-1 * (for_symbols + for_spacing), 0)
+                shift = (spacing + initial_placement.w, 0)
+            elif alignment == HorizontalAlignment.RIGHT:
+                offset = (-1 * initial_placement.w, 0)
+                shift = (-1 * (spacing + initial_placement.w), 0)
+            else:
+                offset = (0, 0)
+                shift = (spacing + initial_placement.w, 0)
+        else:
+            if alignment == VerticalAlignment.MIDDLE:
+                for_symbols = int(len(symbols) / 2. * initial_placement.h)
+                for_spacing = int((len(symbols) - 1) / 2 * spacing)
+                offset = (0, -1 * (for_symbols + for_spacing))
+                shift = (0, spacing + initial_placement.h)
+            elif alignment == VerticalAlignment.BOTTOM:
+                offset = (0, -1 * initial_placement.h)
+                shift = (0, -1 * (spacing + initial_placement.h))
+            else:
+                offset = (0, 0)
+                shift = (0, spacing + initial_placement.h)
 
+
+        place = move_placement(offset[0], offset[1], initial_placement)
+        for symbol in symbols:
             self._inner_layers.append(
                 BasicImageLayer(
                     image_provider,
                     symbol_id_map.get(symbol),
-                    placement
+                    place
                 )
             )
 
-            placement = copy_placement(placement)
-
-            if direction == SymbolDirection.RIGHT:
-                placement.x = placement.x + (spacing + placement.w)
-            elif direction == SymbolDirection.LEFT:
-                placement.x = placement.x - (spacing + placement.w)
-            elif direction == SymbolDirection.DOWN:
-                placement.y = placement.y + (spacing + placement.h)
-            else:
-                placement.y = placement.y - (spacing + placement.h)
+            place = move_placement(shift[0], shift[1], place)
 
     def render(self, onto: Image.Image):
         for layer in self._inner_layers:
