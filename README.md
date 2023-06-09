@@ -13,6 +13,24 @@ With a `.json` configuration file and a `.csv` decklist file, these scripts can 
 There are two example configurations. Each generates the the same card type, but one uses local assets (`example/example_config.json`) while the other reads them from Google drive (`example/example_config_google.json`).
 
 ## To run the local example
+Start a python virtual environment
+```
+python -m venv env
+
+// on macOS
+source env/bin/activate
+
+// on windows (in powershell, Set-ExecutionPolicy RemoteSigned)
+.\env\Scripts\activate
+
+// exit venv
+deactivate
+```
+Install dependencies
+```
+pip install -r requirements.txt
+```
+Run the generator
 ```
 python scripts/util/gen.py -h
 ```
@@ -21,7 +39,7 @@ The flexibility of the input configuration can make it difficult to know what pa
 python ./scripts/util/gen.py --config './example/example_config.json' --decklist './example/assets/example.csv' --out_folder './temp/out/'
 ```
 
-## To run in a Docker container - recommended
+## To run in a Docker container - deprecated
 To encapsulate dependencies, there is a Flask server and Dockerfile to host the generator API in a Docker container. Note that only local assets can be used (no Google image provider), so the 'local' configuration is used.
 To create the container and start the generator server:
 ```
@@ -35,10 +53,12 @@ python ./scripts/util/gen_remote.py --config "./example/example_config.json" --d
 ## To run the google drive example
 This example renders a card defined in a Google sheet using images stored in Google drive. You'll need to do some set up, however, due to Google drive permissions. The app can only interact with files it created in your drive or a shared one. To get started you'll need to upload the assets to the drive.
 
-1. [Create a Google app](https://console.developers.google.com/).
+1. [Create a Google app](https://console.developers.google.com/)
+
 Download the app credentials json. The example config expects it to be in `credentials.json` (which is in the `.gitignore`), but you can change that to point anywhere.
 
 2. Upload decklist
+
 Pick a folder to upload your assets to, and grab its id from the share url. To create an empty decklist in the remote folder `<folder_id>`:
 ```
 python ./scripts/util/google_create_csv.py --creds './credentials.json' --name 'example.csv' --folder_id '<folder_id>'
@@ -46,6 +66,7 @@ python ./scripts/util/google_create_csv.py --creds './credentials.json' --name '
     This will print the Id of the created spreadsheet, `<decklist_id>`. However, you should be able to refer to the assets by name in your configuration and decklists.
 
 3. Upload images
+
 To upload an image `<image_file>` in `<folder_id>`:
 ```
 python ./scripts/util/google_upload_png.py --creds './credentials.json' --source <local_file> --target_folder '<remote_folder_id>'
@@ -56,6 +77,7 @@ python ./scripts/util/google_upload_folder.py --creds './credentials.json' --sou
 ```
 
 4. Generate cards
+
 Update `example/example_config_google.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
 ```
 python ./scripts/util/gen.py --config './example/example_config_google.json' --decklist '<decklist_name>' --out_folder 'temp/out/'
