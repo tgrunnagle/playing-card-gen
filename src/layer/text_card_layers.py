@@ -3,16 +3,16 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
-from card_layer import CardLayer
-from image_card_layers import BasicImageLayer
 from PIL import Image, ImageDraw, ImageFont
 
+from layer.card_layer import CardLayer
+from layer.image_card_layers import BasicImageLayer
 from param.config_enums import HorizontalAlignment, VerticalAlignment
 from provider.image_provider import ImageProvider
 from util.placement import Placement, move_placement, to_box
 
 _DEFAULT_FONT_WINDOWS = "\\Windows\\Fonts\\constan.ttf"
-_DEFAULT_FONT_MACOS = "/Library/Fonts/GeorgiaPro-CondLight.ttf"
+_DEFAULT_FONT_MACOS = "/System/Library/Fonts/Supplemental/Georgia.ttf"
 _DEFAULT_FONT_LINUX = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
 _STARTING_FONT_SIZE = 32
 

@@ -16,6 +16,8 @@ from google.oauth2.credentials import Credentials
 
 
 class GoogleDriveClient:
+    DOWNLOAD_URL_FORMAT = "https://drive.google.com/uc?export=download&id={}"
+
     _SCOPES = [
         "https://www.googleapis.com/auth/drive.file",
     ]

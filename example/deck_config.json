@@ -1,8 +1,4 @@
 {
-    "image_provider": "local",
-    "decklist_provider": "local",
-    "local_assets_folder": "./example/assets/",
-
     "default_card_type": "default",
     "w": 750,
     "h": 1050,
@@ -54,7 +50,6 @@
                 "v_alignment": "middle",
                 "max_font_size": 40
             },
-
             {
                 "type": "static_image",
                 "image": "front_art_frame.png",
@@ -159,11 +154,5 @@
         "max_font_size": 50,
         "spacing_ratio": 1.0
     },
-    "output": {
-        "image_layout": "sheet",
-        "sheet_max_width": 10,
-        "padding": [0, 0],
-        "scaling": [1, 1],
-        "padding_colorstring": "#E0FFFF"
-    }
+    "back_image": "back.png"
 }

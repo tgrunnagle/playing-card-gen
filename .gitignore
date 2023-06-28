@@ -5,6 +5,7 @@ __pycache__/
 
 # local temp
 **/temp/*
+**/local_output/*
 **/credentials.json
 **/*.pickle
 

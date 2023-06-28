@@ -1,0 +1,25 @@
+{
+    "image_provider": "google",
+    "decklist_provider": "google",
+    "google_secrets_path": "../credentials.json",
+    "assets": {
+        "folder": "19zfGDmUKP6Ok1bly6mTkqhb1Pf4GefcT",
+        "temp_folder": "../example/temp/"
+    },
+    "output": {
+        "folder": "1xXuFiXu8aBg0KrSxVO8w1fy8pf1aOLDS",
+        "image_layout": "sheet",
+        "sheet_max_width": 10,
+        "padding": [
+            0,
+            0
+        ],
+        "scaling": [
+            1,
+            1
+        ],
+        "padding_colorstring": "#E0FFFF"
+    },
+    "tts": {
+    }
+}

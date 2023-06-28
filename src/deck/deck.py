@@ -17,6 +17,7 @@ class Deck:
     def __init__(self, name: str, config: dict):
         self._name = name
         self._cards: list[Card] = list()
+        self._back = None
         self._layout = (
             h.dont_require(config, "output/image_layout") or ImageLayout.SHEET
         )
@@ -43,12 +44,21 @@ class Deck:
     def add_card(self, card: Card):
         self._cards.append(card)
 
+    def set_back(self, back: Card):
+        self._back = back
+
+    def has_back(self) -> bool:
+        return not not self._back
+
     def render(self) -> list[Image]:
         return (
             self._render_singletons()
             if self._layout == ImageLayout.SINGLETON
             else self._render_sheets()
         )
+
+    def render_back(self) -> Image:
+        return self._back.render()
 
     def _render_sheets(self) -> list[Image]:
         num_cards = len(self._cards)

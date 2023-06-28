@@ -1,11 +1,10 @@
 #!/usr/bin/python
 from typing import Optional
 
-from card_layer import CardLayer
 from PIL import Image
 
-from param.config_enums import (HorizontalAlignment, Orientation,
-                                VerticalAlignment)
+from layer.card_layer import CardLayer
+from param.config_enums import HorizontalAlignment, Orientation, VerticalAlignment
 from provider.image_provider import ImageProvider
 from util.placement import Placement, move_placement, to_box
 

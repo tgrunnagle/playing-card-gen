@@ -3,10 +3,9 @@ import os
 from abc import ABC
 from typing import Optional
 
-from card_layer import CardLayer
-from image_card_layers import BasicImageLayer, SymbolRowImageLayer
-from text_card_layers import EmbeddedImageTextCardLayer
-
+from layer.card_layer import CardLayer
+from layer.image_card_layers import BasicImageLayer, SymbolRowImageLayer
+from layer.text_card_layers import EmbeddedImageTextCardLayer
 from param.config_enums import CardLayerType
 from provider.image_provider import ImageProvider
 from util.helpers import Helpers as h

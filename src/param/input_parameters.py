@@ -1,31 +1,29 @@
 #!/usr/bin/python
 import json
+import os
 from abc import ABC
 from dataclasses import dataclass
-import os
-
-from provider.decklist_provider import DecklistProviderFactory
 
 
 @dataclass
 class InputParameters:
     config: dict
-    decklist: list[dict[str, str]]
     deck_name: str
 
+
 class InputParameterBuilder(ABC):
-
     @staticmethod
-    def build(config_path: str, decklist_id: str):
-        with open(config_path, 'r') as config_file:
-            config = json.load(config_file)
+    def build(gen_config_path: str, deck_config_path: str, decklist_file: str):
+        with open(gen_config_path, "r") as f:
+            gen_config = json.load(f)
+        with open(deck_config_path, "r") as f:
+            deck_config = json.load(f)
 
-        decklist = DecklistProviderFactory.build(config).get_list(decklist_id)
-        decklist_name = os.path.split(decklist_id)[1].split('.')[0]
+        config = gen_config | deck_config
+
+        decklist_name = os.path.basename(decklist_file).split(".")[0]
 
         return InputParameters(
             config,
-            decklist,
             decklist_name,
         )
-

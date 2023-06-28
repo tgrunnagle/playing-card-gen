@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
-from card import Card
+from card.card import Card
 from layer.card_layer_factory import CardLayerFactory
+from layer.image_card_layers import BasicImageLayer
 from provider.image_provider import ImageProviderFactory
 from util.helpers import Helpers as h
+from util.placement import Placement
 
 
 class CardBuilder:
@@ -27,6 +29,17 @@ class CardBuilder:
         card.add_layers(
             CardLayerFactory.build(
                 layers, self._config, card_info, self._image_provider
+            )
+        )
+        return card
+
+    def build_back(self) -> Card:
+        card = Card(self._w, self._h)
+        card.add_layers(
+            BasicImageLayer(
+                self._image_provider,
+                h.require("back_image"),
+                Placement(0, 0, self._w, self._h),
             )
         )
         return card

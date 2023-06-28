@@ -1,9 +1,7 @@
 #!/usr/bin/python
 
 import contextlib
-import os
 from abc import ABC
-from typing import Optional, Tuple
 
 from PIL.Image import Image
 
@@ -11,51 +9,56 @@ from card.card_builder import CardBuilder
 from deck.deck import Deck
 from deck.deck_builder import DeckBuilder
 from param.input_parameters import InputParameters
+from provider.decklist_provider import DecklistProviderFactory
+from provider.image_provider import ImageProviderFactory
 
 
 class Generator(ABC):
-    def gen_deck(params: InputParameters) -> Deck:
+    @staticmethod
+    def gen_deck(deck_name: str, params: InputParameters) -> Deck:
         card_builder = CardBuilder(params.config)
         deck_builder = DeckBuilder(card_builder, params.config)
-        deck = deck_builder.build(params.deck_name, params.decklist)
+        decklist = DecklistProviderFactory.build(params.config).get_list(deck_name)
+        deck = deck_builder.build(params.deck_name, decklist)
         return deck
 
-    def gen_deck_images(
-        out_folder: str,
-        params: Optional[InputParameters] = None,
-        deck: Optional[Deck] = None,
+    @staticmethod
+    def gen_images(
+        deck: Deck,
+        params: InputParameters,
     ) -> list[str]:
-        if (params is None) == (deck is None):
-            Exception("One of either params or deck must be set")
+        image_provider = ImageProviderFactory.build(params.config)
 
-        if deck is None:
-            deck = Generator.gen_deck(params)
+        def _save_and_close(name: str, img: Image) -> str:
+            with contextlib.closing(img):
+                return image_provider.save_image(name, img)
 
-        if not os.path.exists(out_folder):
-            os.makedirs(out_folder)
-
-        result_files = []
-        result_files.extend(
-            list(
-                map(
-                    Generator._save_deck_image,
-                    zip(
-                        deck.render(),
-                        [
-                            Generator._get_output_path(out_folder, deck.get_name(), i)
-                            for i in range(deck.get_size())
-                        ],
-                    ),
-                )
+        images = deck.render()
+        deck_name = deck.get_name()
+        result_files = list(
+            map(
+                _save_and_close,
+                [
+                    Generator._get_image_name(deck_name, i)
+                    for i in range(len(images))
+                ],
+                images,
             )
         )
-
         return result_files
 
-    def _save_deck_image(image_and_path: Tuple[Image, str]) -> str:
-        with contextlib.closing(image_and_path[0]):
-            image_and_path[0].save(image_and_path[1], bitmap_format="png")
-        return image_and_path[1]
+    @staticmethod
+    def gen_back_image(
+        deck: Deck,
+        params: InputParameters,
+    ) -> str | None:
+        if not deck.has_back():
+            return None
+        image_provider = ImageProviderFactory.build(params.config)
+        image = deck.render_back()
+        with contextlib.closing(image):
+            return image_provider.save_image(deck.get_name() + "_back.png", image)
 
-    def _get_output_path(out_folder: str, deck_name: str, image_index: int) -> str:
-        return os.path.join(out_folder, deck_name + "_" + str(image_index) + ".png")
+    @staticmethod
+    def _get_image_name(deck_name: str, index: int) -> str:
+        return deck_name + "_" + str(index) + ".png"
