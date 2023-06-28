@@ -4,7 +4,7 @@ from abc import ABC
 from dataclasses import dataclass
 import os
 
-from decklist_provider import DecklistProviderFactory
+from provider.decklist_provider import DecklistProviderFactory
 
 
 @dataclass

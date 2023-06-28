@@ -4,48 +4,43 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import PIL.Image
-from config_enums import ImageProviderType
-from google_drive_client import GoogleDriveClient
+
+from google.google_drive_client import GoogleDriveClient
+from param.config_enums import ImageProviderType
 
 
 class ImageProvider(ABC):
-
     @abstractmethod
     def get_image(id: str) -> PIL.Image.Image:
         pass
 
 
 class ImageProviderFactory(ABC):
-
     _DEFAULT_PROVIDER = ImageProviderType.LOCAL
 
     @staticmethod
     def build(config: dict) -> ImageProvider:
-        p: ImageProviderType = config.get(
-            'image_provider') or ImageProviderFactory._DEFAULT_PROVIDER
+        p: ImageProviderType = (
+            config.get("image_provider") or ImageProviderFactory._DEFAULT_PROVIDER
+        )
 
         if p == ImageProviderType.LOCAL:
-            return LocalImageProvider(
-                config.get('local_assets_folder'))
+            return LocalImageProvider(config.get("local_assets_folder"))
         elif p == ImageProviderType.GOOGLE:
             return GoogleDriveImageProvider(
-                config.get('google_secrets_path'),
-                config.get('google_assets_folder_id'),
-                config.get('google_temp_folder'))
+                config.get("google_secrets_path"),
+                config.get("google_assets_folder_id"),
+                config.get("google_temp_folder"),
+            )
         else:
-            raise Exception(
-                'Unsupported image provider type "' + p + '"')
+            raise Exception('Unsupported image provider type "' + p + '"')
 
 
 class GoogleDriveImageProvider(ImageProvider):
-
-    _TEMP_FOLDER = './temp/google/'
+    _TEMP_FOLDER = "./temp/google/"
 
     def __init__(
-            self,
-            secrets_path: str,
-            folder_id: Optional[str],
-            temp_folder: Optional[str]
+        self, secrets_path: str, folder_id: Optional[str], temp_folder: Optional[str]
     ):
         self._temp_folder = temp_folder or GoogleDriveImageProvider._TEMP_FOLDER
         if not os.path.exists(self._temp_folder):
@@ -63,7 +58,7 @@ class GoogleDriveImageProvider(ImageProvider):
         return img
 
     def _get_local_file_name(self, id: str) -> str:
-        name = id if id.endswith('.png') else id + '.png'
+        name = id if id.endswith(".png") else id + ".png"
         return os.path.join(self._temp_folder, name)
 
 

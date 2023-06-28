@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import PIL.Image
-from card_layer import CardLayer
-from placement import Placement
+
+from layer.card_layer import CardLayer
+from util.placement import Placement
 
 
 class Card:
@@ -20,8 +21,7 @@ class Card:
         self._layers.extend(layers)
 
     def render(self) -> PIL.Image.Image:
-        image = PIL.Image.new(
-            'RGBA', (int(self._w), int(self._h)))
+        image = PIL.Image.new("RGBA", (int(self._w), int(self._h)))
 
         for layer in self._layers:
             layer.render(image)

@@ -1,18 +1,18 @@
 #!/usr/bin/python
-from card_layer import CardLayer
-from config_enums import Orientation, VerticalAlignment, HorizontalAlignment
-from image_provider import ImageProvider
-from PIL import Image
-from placement import Placement, copy_placement, to_box, move_placement
 from typing import Optional
-import math
+
+from card_layer import CardLayer
+from PIL import Image
+
+from param.config_enums import (HorizontalAlignment, Orientation,
+                                VerticalAlignment)
+from provider.image_provider import ImageProvider
+from util.placement import Placement, move_placement, to_box
+
 
 class BasicImageLayer(CardLayer):
     def __init__(
-        self,
-        image_provider: ImageProvider,
-        art_id: str,
-        art_placement: Placement
+        self, image_provider: ImageProvider, art_id: str, art_placement: Placement
     ):
         self._image_provider = image_provider
         self._art_id = art_id
@@ -30,16 +30,15 @@ class BasicImageLayer(CardLayer):
                 h_resized = self._art_placement.h
 
             with image.resize((w_resized, h_resized)) as resized:
-                with resized.crop((0, 0, self._art_placement.w, self._art_placement.h)) as cropped:
+                with resized.crop(
+                    (0, 0, self._art_placement.w, self._art_placement.h)
+                ) as cropped:
                     onto.paste(
-                        im=cropped,
-                        box=to_box(self._art_placement),
-                        mask=cropped
+                        im=cropped, box=to_box(self._art_placement), mask=cropped
                     )
 
 
 class SymbolRowImageLayer(CardLayer):
-
     def __init__(
         self,
         image_provider: ImageProvider,
@@ -48,18 +47,18 @@ class SymbolRowImageLayer(CardLayer):
         initial_placement: Placement,
         spacing: Optional[int] = None,
         orientation: Optional[Orientation] = None,
-        alignment: Optional[VerticalAlignment | HorizontalAlignment] = None
+        alignment: Optional[VerticalAlignment | HorizontalAlignment] = None,
     ):
         self._inner_layers: list[CardLayer] = []
 
         spacing = spacing or 0
         orientation = orientation or Orientation.HORIZONTAL
         alignment = alignment or HorizontalAlignment.LEFT
-        symbols = symbols.strip().replace(' ', '')
+        symbols = symbols.strip().replace(" ", "")
 
         if orientation == Orientation.HORIZONTAL:
             if alignment == HorizontalAlignment.CENTER:
-                for_symbols = int(len(symbols) / 2. * initial_placement.w)
+                for_symbols = int(len(symbols) / 2.0 * initial_placement.w)
                 for_spacing = int((len(symbols) - 1) / 2 * spacing)
                 offset = (-1 * (for_symbols + for_spacing), 0)
                 shift = (spacing + initial_placement.w, 0)
@@ -71,7 +70,7 @@ class SymbolRowImageLayer(CardLayer):
                 shift = (spacing + initial_placement.w, 0)
         else:
             if alignment == VerticalAlignment.MIDDLE:
-                for_symbols = int(len(symbols) / 2. * initial_placement.h)
+                for_symbols = int(len(symbols) / 2.0 * initial_placement.h)
                 for_spacing = int((len(symbols) - 1) / 2 * spacing)
                 offset = (0, -1 * (for_symbols + for_spacing))
                 shift = (0, spacing + initial_placement.h)
@@ -82,15 +81,10 @@ class SymbolRowImageLayer(CardLayer):
                 offset = (0, 0)
                 shift = (0, spacing + initial_placement.h)
 
-
         place = move_placement(offset[0], offset[1], initial_placement)
         for symbol in symbols:
             self._inner_layers.append(
-                BasicImageLayer(
-                    image_provider,
-                    symbol_id_map.get(symbol),
-                    place
-                )
+                BasicImageLayer(image_provider, symbol_id_map.get(symbol), place)
             )
 
             place = move_placement(shift[0], shift[1], place)
