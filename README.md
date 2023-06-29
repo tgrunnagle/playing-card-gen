@@ -12,8 +12,8 @@ With a `.json` configuration file and a `.csv` decklist file, these scripts can 
 
 There are two example configurations. Each generates the the same card type, but one uses local assets (`example/example_config.json`) while the other reads them from Google drive (`example/example_config_google.json`).
 
-## To run the local example
-Start a python virtual environment
+## To run the example with local assets
+1. Start a python virtual environment
 ```
 python -m venv env
 
@@ -26,31 +26,28 @@ source env/bin/activate
 // exit venv
 deactivate
 ```
-Install dependencies
+
+2. Install dependencies
 ```
 pip install -r requirements.txt
 ```
-Run the generator
+
+3. Run the generator
 ```
-python scripts/util/gen.py -h
+cd src
+python .\run_gen.py -h
+python .\run_gen.py --gen_config "..\example\gen_config_local.json" --deck_config "..\example\deck_config.json" --decklist "example.csv"
 ```
+
 The flexibility of the input configuration can make it difficult to know what parameters are supported. `scripts/card_layer_factory.py` is a good source of truth for card layers, and `scripts/config_enums.py` should help with understanding appropriate parameter values. The example is already configured for a number of layer types along with other necessary build parameters.
+
+## To run the generator against google drive
+
+**WIP**
 ```
-python ./scripts/util/gen.py --config './example/example_config.json' --decklist './example/assets/example.csv' --out_folder './temp/out/'
+python .\run_gen.py --gen_config "..\example\gen_config_google.json" --deck_config "..\example\deck_config.json" --decklist "example.csv"
 ```
 
-## To run in a Docker container - deprecated
-To encapsulate dependencies, there is a Flask server and Dockerfile to host the generator API in a Docker container. Note that only local assets can be used (no Google image provider), so the 'local' configuration is used.
-To create the container and start the generator server:
-```
-docker run -p 8084:8084 --gpus all --rm -it $(docker build -q --tag "playing-card-gen:latest" --build-arg ASSETS_FOLDER="./example/assets/" --build-arg PORT=8084 .)
-```
-To call the server:
-```
-python ./scripts/util/gen_remote.py --config "./example/example_config.json" --decklist "./example/assets/example.csv" --port 8084 --out_folder "./temp/out"
-```
-
-## To run the google drive example
 This example renders a card defined in a Google sheet using images stored in Google drive. You'll need to do some set up, however, due to Google drive permissions. The app can only interact with files it created in your drive or a shared one. To get started you'll need to upload the assets to the drive.
 
 1. [Create a Google app](https://console.developers.google.com/)
@@ -78,9 +75,9 @@ python ./scripts/util/google_upload_folder.py --creds './credentials.json' --sou
 
 4. Generate cards
 
-Update `example/example_config_google.json` with the names of the files you uploaded (specifying the `"google_assets_folder_id"` enables reference by name rather than id).
+Update `example/example_config_google.json` `input/folder` with the ID of the drive folder you uploaded assets to in step 3. Create an output folder and update `output/folder` with its ID. Then generate the cards pointing to `gen_config_google.json`.
 ```
-python ./scripts/util/gen.py --config './example/example_config_google.json' --decklist '<decklist_name>' --out_folder 'temp/out/'
+python .\run_gen.py --gen_config "..\example\gen_config_google.json" --deck_config "..\example\deck_config.json" --decklist "example.csv"
 ```
 
 ## Utility scripts

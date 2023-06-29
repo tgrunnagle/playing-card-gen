@@ -5,20 +5,20 @@ from PIL import Image
 
 from layer.card_layer import CardLayer
 from param.config_enums import HorizontalAlignment, Orientation, VerticalAlignment
-from provider.image_provider import ImageProvider
+from provider.input_provider import InputProvider
 from util.placement import Placement, move_placement, to_box
 
 
 class BasicImageLayer(CardLayer):
     def __init__(
-        self, image_provider: ImageProvider, art_id: str, art_placement: Placement
+        self, input_provider: InputProvider, art_id: str, art_placement: Placement
     ):
-        self._image_provider = image_provider
+        self._input_provider = input_provider
         self._art_id = art_id
         self._art_placement = art_placement
 
     def render(self, onto: Image.Image):
-        with self._image_provider.get_image(self._art_id) as image:
+        with self._input_provider.get_image(self._art_id) as image:
             w_ratio = image.width / self._art_placement.w
             h_ratio = image.height / self._art_placement.h
             if w_ratio <= h_ratio:
@@ -40,7 +40,7 @@ class BasicImageLayer(CardLayer):
 class SymbolRowImageLayer(CardLayer):
     def __init__(
         self,
-        image_provider: ImageProvider,
+        input_provider: InputProvider,
         symbols: str,
         symbol_id_map: dict[str, str],
         initial_placement: Placement,
@@ -83,7 +83,7 @@ class SymbolRowImageLayer(CardLayer):
         place = move_placement(offset[0], offset[1], initial_placement)
         for symbol in symbols:
             self._inner_layers.append(
-                BasicImageLayer(image_provider, symbol_id_map.get(symbol), place)
+                BasicImageLayer(input_provider, symbol_id_map.get(symbol), place)
             )
 
             place = move_placement(shift[0], shift[1], place)

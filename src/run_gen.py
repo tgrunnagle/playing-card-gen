@@ -2,9 +2,10 @@
 import argparse
 
 from gen.generator import Generator
-from google.google_drive_client import GoogleDriveClient
-from param.config_enums import ImageProviderType
+from param.config_enums import OutputProviderType
 from param.input_parameters import InputParameterBuilder
+from provider.input_provider import InputProviderFactory
+from provider.output_provider import OutputProviderFactory
 from tts.tts_helper import TTSHelper
 from util.helpers import Helpers as h
 
@@ -26,7 +27,7 @@ if __name__ == "__main__":
         "--decklist",
         type=str,
         required=True,
-        help="Path/name of the decklist to generate.",
+        help="Path or name of the decklist to generate.",
     )
     parser.add_argument(
         "--tts", action="store_true", help="Flag to build and save a TTS deck object."
@@ -36,32 +37,44 @@ if __name__ == "__main__":
     params = InputParameterBuilder.build(
         args.gen_config, args.deck_config, args.decklist
     )
-    deck = Generator.gen_deck(args.decklist, params)
-    image_files = Generator.gen_images(deck, params)
-    back_image_file = Generator.gen_back_image(deck, params)
+    input_provider = InputProviderFactory.build(params.config)
+    output_provider = OutputProviderFactory.build(params.config)
+
+    deck = Generator.gen_deck(params, input_provider)
+    (front_files, back_files) = Generator.gen_and_save_images(deck, output_provider)
+    print("Saved deck images.")
 
     if args.tts:
         if (
-            len(image_files) != 1
-            or not back_image_file
-            or h.require(params.config, "image_provider") != ImageProviderType.GOOGLE
+            len(front_files) != 1
+            or not back_files
+            or output_provider.TYPE != OutputProviderType.GOOGLE
         ):
             raise Exception(
-                "Expected a single output image (sheet), a back, and google image provider for TTS"
+                "Expected a single output image (sheet), a back image, and google drive output to generate TTS object."
             )
-        google_client = GoogleDriveClient(
-            h.require(params.config, "google_secrets_path")
-        )
-        front_id = image_files[0]
-        back_id = back_image_file
-        tts_file = TTSHelper.build_and_save(
-            deck.get_name(),
+
+        tts_deck = TTSHelper.build_deck(
             deck.get_size(),
             deck.get_dimensions()[0],
-            front_id,
-            back_id,
-            h.dont_require("tts/local_output_folder"),
+            front_files[0],
+            back_files,
         )
-        print("Saved TTS object to " + tts_file)
-        google_client.create_or_update_json(tts_file, h.require("output/folder"))
-        print("Uploaded TTS object to google drive")
+        tts_object_name = deck.get_name() + "_tts.json"
+        output_provider.save_json(tts_deck, tts_object_name)
+
+        tts_file = TTSHelper.save_object(
+            tts_deck,
+            tts_object_name,
+            h.dont_require(params.config, "output/tts/saved_objects_folder"),
+        )
+        if not tts_file:
+            print("Saved tts object to '" + tts_file + "'.")
+        else:
+            print(
+                "Did not save tts object to saved objects folder. "
+                + "Either the output/tts/saved_objects_folder must be specified in --gen_config or "
+                + "'"
+                + TTSHelper.TTS_SAVED_OBJECTS_FOLDER
+                + "' must exist."
+            )

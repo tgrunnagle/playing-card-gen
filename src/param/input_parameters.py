@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 @dataclass
 class InputParameters:
+    decklist: str
     config: dict
     deck_name: str
 
@@ -19,11 +20,14 @@ class InputParameterBuilder(ABC):
         with open(deck_config_path, "r") as f:
             deck_config = json.load(f)
 
+        decklist = os.path.basename(decklist_file)
+
         config = gen_config | deck_config
 
-        decklist_name = os.path.basename(decklist_file).split(".")[0]
+        deck_name = decklist.split(".")[0]
 
         return InputParameters(
+            decklist,
             config,
-            decklist_name,
+            deck_name,
         )

@@ -76,7 +76,7 @@ class Deck:
                 card = self._cards[card_index]
                 card_index = card_index + 1
 
-                with self._render_card(card) as card_image:
+                with contextlib.closing(self._render_card(card)) as card_image:
                     if deck_image is None:
                         x_step = card_image.width
                         y_step = card_image.height

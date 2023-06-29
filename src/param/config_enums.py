@@ -15,12 +15,12 @@ class CardLayerType(StrEnum):
     SYMBOL_ROW = "symbol_row"
 
 
-class DecklistProviderType(StrEnum):
+class InputProviderType(StrEnum):
     LOCAL = "local"
     GOOGLE = "google"
 
 
-class ImageProviderType(StrEnum):
+class OutputProviderType(StrEnum):
     LOCAL = "local"
     GOOGLE = "google"
 

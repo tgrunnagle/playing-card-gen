@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 from layer.card_layer import CardLayer
 from layer.image_card_layers import BasicImageLayer
 from param.config_enums import HorizontalAlignment, VerticalAlignment
-from provider.image_provider import ImageProvider
+from provider.input_provider import InputProvider
 from util.placement import Placement, move_placement, to_box
 
 _DEFAULT_FONT_WINDOWS = "\\Windows\\Fonts\\constan.ttf"
@@ -27,7 +27,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
         self,
         text: str,
         placement: Placement,
-        image_provider: ImageProvider,
+        input_provider: InputProvider,
         embedding_map: dict[str, str] = {},
         max_font_size: Optional[int] = None,
         font_file: Optional[str] = None,
@@ -40,7 +40,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
     ):
         self._text = text
         self._placement = placement
-        self._image_provider = image_provider
+        self._input_provider = input_provider
         self._embedding_map = embedding_map
 
         self._starting_font_size = max_font_size or _STARTING_FONT_SIZE
@@ -212,7 +212,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
     ):
         for embed in embeds:
             BasicImageLayer(
-                self._image_provider,
+                self._input_provider,
                 embed.image_id,
                 move_placement(offset[0], offset[1], embed.place),
             ).render(onto)
@@ -221,7 +221,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
     def _get_padding_str(
         self, embed_file: str, draw: ImageDraw.ImageDraw, font: ImageFont.ImageFont
     ) -> tuple[str, tuple[int, int]]:
-        with self._image_provider.get_image(embed_file) as embed_image:
+        with self._input_provider.get_image(embed_file) as embed_image:
             # the padding should have similar w/h ratio as the embedding
             image_w_h_ratio = embed_image.width / embed_image.height
             height_px = draw.textsize(" ", font)[1]

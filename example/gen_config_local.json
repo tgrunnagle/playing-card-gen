@@ -1,10 +1,10 @@
 {
-    "image_provider": "local",
-    "decklist_provider": "local",
-    "assets": {
+    "input": {
+        "type": "local",
         "folder": "../example/local_assets/"
     },
     "output": {
+        "type": "local",
         "folder": "../example/local_output/",
         "image_layout": "sheet",
         "sheet_max_width": 10,
@@ -17,7 +17,5 @@
             1
         ],
         "padding_colorstring": "#E0FFFF"
-    },
-    "tts": {
     }
 }

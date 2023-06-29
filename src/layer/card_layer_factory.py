@@ -7,7 +7,7 @@ from layer.card_layer import CardLayer
 from layer.image_card_layers import BasicImageLayer, SymbolRowImageLayer
 from layer.text_card_layers import EmbeddedImageTextCardLayer
 from param.config_enums import CardLayerType
-from provider.image_provider import ImageProvider
+from provider.input_provider import InputProvider
 from util.helpers import Helpers as h
 from util.placement import *
 
@@ -18,7 +18,7 @@ class CardLayerFactory(ABC):
         layer_configs: list[dict],
         config: dict,
         card: dict[str, str],
-        image_provider: ImageProvider,
+        input_provider: InputProvider,
     ) -> list[CardLayer]:
         layers: list[CardLayer] = []
 
@@ -30,7 +30,7 @@ class CardLayerFactory(ABC):
                     EmbeddedImageTextCardLayer(
                         h.require(layer_config, "text"),
                         parse_placement(h.require(layer_config, "place")),
-                        image_provider,
+                        input_provider,
                         # optional
                         max_font_size=layer_config.get("max_font_size")
                         or h.dont_require(config, "text/max_font_size"),
@@ -49,7 +49,7 @@ class CardLayerFactory(ABC):
                     EmbeddedImageTextCardLayer(
                         h.require(card, h.require(layer_config, "prop")),
                         parse_placement(h.require(layer_config, "place")),
-                        image_provider,
+                        input_provider,
                         # optional params
                         max_font_size=layer_config.get("max_font_size")
                         or h.dont_require(config, "text/max_font_size"),
@@ -68,7 +68,7 @@ class CardLayerFactory(ABC):
                     EmbeddedImageTextCardLayer(
                         h.require(card, h.require(layer_config, "prop")),
                         parse_placement(h.require(layer_config, "place")),
-                        image_provider,
+                        input_provider,
                         # optional params
                         embedding_map=h.require(config, "text/embed_symbol_id_map"),
                         max_font_size=layer_config.get("max_font_size")
@@ -90,7 +90,7 @@ class CardLayerFactory(ABC):
             elif layer_type == CardLayerType.STATIC_IMAGE:
                 layers.append(
                     BasicImageLayer(
-                        image_provider,
+                        input_provider,
                         h.require(layer_config, "image"),
                         parse_placement(h.require(layer_config, "place")),
                     )
@@ -99,7 +99,7 @@ class CardLayerFactory(ABC):
             elif layer_type == CardLayerType.IMAGE:
                 layers.append(
                     BasicImageLayer(
-                        image_provider,
+                        input_provider,
                         card.get(h.require(layer_config, "prop")),
                         parse_placement(h.require(layer_config, "place")),
                     )
@@ -108,7 +108,7 @@ class CardLayerFactory(ABC):
             elif layer_type == CardLayerType.SYMBOL_ROW:
                 layers.append(
                     SymbolRowImageLayer(
-                        image_provider,
+                        input_provider,
                         card.get(h.require(layer_config, "prop")),
                         h.require(config, "symbols/id_map"),
                         parse_placement(h.require(layer_config, "place")),

@@ -9,55 +9,45 @@ from card.card_builder import CardBuilder
 from deck.deck import Deck
 from deck.deck_builder import DeckBuilder
 from param.input_parameters import InputParameters
-from provider.decklist_provider import DecklistProviderFactory
-from provider.image_provider import ImageProviderFactory
+from provider.input_provider import InputProvider
+from provider.output_provider import OutputProvider
 
 
 class Generator(ABC):
     @staticmethod
-    def gen_deck(deck_name: str, params: InputParameters) -> Deck:
+    def gen_deck(params: InputParameters, input_provider: InputProvider) -> Deck:
         card_builder = CardBuilder(params.config)
         deck_builder = DeckBuilder(card_builder, params.config)
-        decklist = DecklistProviderFactory.build(params.config).get_list(deck_name)
+        decklist = input_provider.get_decklist(params.decklist)
         deck = deck_builder.build(params.deck_name, decklist)
         return deck
 
     @staticmethod
-    def gen_images(
+    def gen_and_save_images(
         deck: Deck,
-        params: InputParameters,
+        output_provider: OutputProvider,
     ) -> list[str]:
-        image_provider = ImageProviderFactory.build(params.config)
+        def _save_and_close(img: Image, name: str) -> str:
+            with contextlib.closing(img) as i:
+                return output_provider.save_image(i, name)
 
-        def _save_and_close(name: str, img: Image) -> str:
-            with contextlib.closing(img):
-                return image_provider.save_image(name, img)
-
-        images = deck.render()
+        front_images = deck.render()
         deck_name = deck.get_name()
-        result_files = list(
+        front_files = list(
             map(
                 _save_and_close,
+                front_images,
                 [
                     Generator._get_image_name(deck_name, i)
-                    for i in range(len(images))
+                    for i in range(len(front_images))
                 ],
-                images,
             )
         )
-        return result_files
-
-    @staticmethod
-    def gen_back_image(
-        deck: Deck,
-        params: InputParameters,
-    ) -> str | None:
-        if not deck.has_back():
-            return None
-        image_provider = ImageProviderFactory.build(params.config)
-        image = deck.render_back()
-        with contextlib.closing(image):
-            return image_provider.save_image(deck.get_name() + "_back.png", image)
+        back_image = deck.render_back() if deck.has_back() else None
+        back_file = (
+            _save_and_close(back_image, deck_name + "_back.png") if back_image else None
+        )
+        return (front_files, back_file)
 
     @staticmethod
     def _get_image_name(deck_name: str, index: int) -> str:
