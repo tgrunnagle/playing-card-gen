@@ -26,14 +26,14 @@ class GoogleDriveClient:
         self._cached_creds: Optional[Credentials] = None
 
     def create_or_update_json(
-        self, source: str, target_folder_id: str, name: str | None
+        self, source: str, target_folder_id: str, name: str | None = None
     ) -> str:
         return self._create_or_update_file(
             "application/json", source, target_folder_id, name
         )
 
     def create_or_update_png(
-        self, source: str, target_folder_id: str, name: str | None
+        self, source: str, target_folder_id: str, name: str | None = None
     ) -> str:
         return self._create_or_update_file("image/png", source, target_folder_id, name)
 
@@ -50,10 +50,10 @@ class GoogleDriveClient:
         else:
             return self._create_file(mime_type, source, target_folder_id, target_name)
 
-    def create_json(self, source: str, target_folder_id: str, name: str | None) -> str:
+    def create_json(self, source: str, target_folder_id: str, name: str | None = None) -> str:
         return self._create_file("application/json", source, target_folder_id, name)
 
-    def create_png(self, source: str, target_folder_id: str, name: str | None) -> str:
+    def create_png(self, source: str, target_folder_id: str, name: str | None = None) -> str:
         return self._create_file("image/png", source, target_folder_id, name)
 
     def create_csv(self, name: str, target_folder_id: str) -> str:
@@ -243,7 +243,7 @@ class GoogleDriveClient:
         )
         for id, name, mtype in file_ids:
             try:
-                if mtype == "image/png":
+                if mtype == "image/png" or mtype == "application/json":
                     out_name = os.path.join(output_folder, name)
                     self.download_file(id, out_name, None)
 
@@ -257,9 +257,17 @@ class GoogleDriveClient:
                             writer.writerow(row)
 
                 else:
-                    print('Warning: unsupported file "' + name + '"')
+                    print(
+                        "Warning: unsupported file '"
+                        + name
+                        + "' with mtype '"
+                        + mtype
+                        + "'"
+                    )
             except Exception as e:
-                print("Warning: Failed to download " + name + ", id " + id)
+                print(
+                    "Warning: Failed to download " + name + ", id " + id + ": " + str(e)
+                )
 
     def copy_file(
         self, id_or_name: str, source_folder: Optional[str], target_folder: str
