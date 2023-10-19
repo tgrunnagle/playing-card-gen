@@ -49,10 +49,12 @@ class LocalInputProvider(InputProvider):
         return InputProviderType.LOCAL
 
     def __init__(self, config: dict):
-        self._folder = h.require(config, "input/folder")
+        self._folder = os.path.abspath(h.require(config, "input/folder"))
 
     def get_decklist(self, name: str) -> list[dict[str, str]]:
-        with open(os.path.join(self._folder, name), "r", newline="\r\n") as f:
+        with open(
+            os.path.join(self._folder, name), "r", newline="\r\n"
+        ) as f:
             return list(DictReader(f.readlines(), delimiter=","))
 
     def get_image(self, name: str) -> PIL.Image.Image:
@@ -68,7 +70,7 @@ class GoogleInputProvider(InputProvider):
     def __init__(self, config: dict):
         self._client = GoogleDriveClient(h.require(config, "google_secrets_path"))
         self._folder = h.require(config, "input/folder")
-        self._temp_folder = h.require(config, "input/temp_folder")
+        self._temp_folder = os.path.abspath(h.require(config, "input/temp_folder"))
         if not os.path.exists(self._temp_folder):
             os.makedirs(self._temp_folder)
 

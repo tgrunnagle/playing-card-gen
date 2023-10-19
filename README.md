@@ -12,6 +12,9 @@ With `json` configuration files and a `csv` decklist file, these scripts will re
 There are two example generation configurations, which describe how assets are retrieved and how and where results are saved. `example/example_config_local.json` uses local assets while `example/example_config_google.json` leverages Google drive. `example/deck_config.json` describes the card layout and other card-specific features.
 
 ## To initialize the python virtual environment
+
+Requires `python 3.11`.
+
 ```
 python -m venv env
 
@@ -19,7 +22,7 @@ python -m venv env
 source env/bin/activate
 
 # on windows (in powershell, Set-ExecutionPolicy RemoteSigned)
-.\env\Scripts\activate
+./env/Scripts/activate
 
 # exit venv
 deactivate
@@ -33,8 +36,8 @@ pip install -r requirements.txt
 ## To run the generator using local assets
 ```
 cd src
-python .\run_gen.py -h
-python .\run_gen.py --gen_config "..\example\gen_config_local.json" --deck_config "..\example\deck_config.json" --decklist "example.csv"
+python run_gen.py -h
+python run_gen.py --gen_config "../example/gen_config_local.json" --deck_config "../example/deck_config.json" --decklist "example.csv"
 ```
 
 See `example/deck_config.json` for an example of how card formats are described in configuration. Most importantly, each type of card is a list of layers, which can be:
@@ -60,19 +63,19 @@ Since the google client can only interact with files it created, use the `run_go
 See the script parameters by running the following. You can find the folder IDs from google drive in the last segment of the URL path when browsing `https://drive.google.com`. 
 
 ```
-python .\run_google_drive.py -h
+python run_google_drive.py -h
 ```
 
 3. Generate cards
 
 Update `example/example_config_google.json` `input/folder` with the ID of the drive folder you uploaded assets to in step 3. Create an output folder and update `output/folder` with its ID. Then generate the cards pointing to `gen_config_google.json`.
 ```
-python .\run_gen.py --gen_config "..\example\gen_config_google.json" --deck_config "..\example\deck_config.json" --decklist "example.csv"
+python run_gen.py --gen_config "../example/gen_config_google.json" --deck_config "../example/deck_config.json" --decklist "example.csv"
 ```
 
 ## To generate a Tabletop Simulator object
 If you've generated the cards and uploaded the results to Google drive (`output/type` is `google`), you can automatically generate a "saved object file" for use with Tabletop Simulator. Add the `--tts` parameter to `run_gen.py` to create the `json` object file. The script will also attempt to copy the file to the TTS saved objects folder so it can be easily loaded into the game (update `output/tts/saved_objects_folder` if the default path doesn't work for you).
 
 ```
-python .\run_gen.py --gen_config "..\example\gen_config_google.json" --deck_config "..\example\deck_config.json" --decklist "example.csv" --tts
+python run_gen.py --gen_config "../example/gen_config_google.json" --deck_config "../example/deck_config.json" --decklist "example.csv" --tts
 ```

@@ -114,7 +114,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
     ) -> tuple[list[str], list[EmbeddedImage]]:
         lines = []
         embeds = []
-        line_height = draw.textsize(" ", font)[1]
+        line_height = draw.textbbox((0, 0), " ", font)[3]
         line_and_spacing_height = line_height + spacing
 
         (padded_text, embeddings) = self._pad_embeddings(draw, font)
@@ -140,7 +140,7 @@ class EmbeddedImageTextCardLayer(CardLayer):
                 # x offset for the preceding text and the spacing due to embedding size ratio
                 x = (
                     self._placement.x
-                    + draw.textsize(padded_text[i_text : embed[0]], font)[0]
+                    + draw.textbbox((0, 0), padded_text[i_text : embed[0]], font)[2]
                     + (embed_size[1] - embed_size[1] * self._embed_size_ratio) / 2
                 )
 
@@ -224,13 +224,13 @@ class EmbeddedImageTextCardLayer(CardLayer):
         with self._input_provider.get_image(embed_file) as embed_image:
             # the padding should have similar w/h ratio as the embedding
             image_w_h_ratio = embed_image.width / embed_image.height
-            height_px = draw.textsize(" ", font)[1]
+            height_px = draw.textbbox((0, 0), " ", font)[3]
             target_width = image_w_h_ratio * height_px
             padding = " "
-            while draw.textsize(padding, font)[0] < target_width:
+            while draw.textbbox((0, 0), padding, font)[2] < target_width:
                 padding = padding + " "
 
-            w_ratio = embed_image.width / draw.textsize(padding, font)[0]
+            w_ratio = embed_image.width / draw.textbbox((0, 0), padding, font)[2]
             return (
                 padding,
                 (int(embed_image.width / w_ratio), int(embed_image.height / w_ratio)),

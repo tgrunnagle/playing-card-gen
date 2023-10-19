@@ -48,7 +48,7 @@ class LocalOutputProvider(OutputProvider):
         return OutputProviderType.LOCAL
 
     def __init__(self, config: dict):
-        self._folder = h.require(config, "output/folder")
+        self._folder = os.path.abspath(h.require(config, "output/folder"))
         if not os.path.exists(self._folder):
             os.makedirs(self._folder)
 
@@ -76,7 +76,7 @@ class GoogleOutputProvider(OutputProvider):
     def __init__(self, config: dict):
         self._client = GoogleDriveClient(h.require(config, "google_secrets_path"))
         self._folder = h.require(config, "output/folder")
-        self._temp_folder = h.require(config, "output/temp_folder")
+        self._temp_folder = os.path.abspath(h.require(config, "output/temp_folder"))
         if not os.path.exists(self._temp_folder):
             os.makedirs(self._temp_folder)
 
