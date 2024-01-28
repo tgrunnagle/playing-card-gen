@@ -1,4 +1,4 @@
 google_api_python_client==2.68.0
 google_auth_oauthlib==0.7.1
-Pillow==10.0.1
+Pillow==10.2.0
 black>=23.10.0
